@@ -1,6 +1,18 @@
+<div align="center">
+
 # harness-doctor
 
-Lint your Harness pipelines before they reach production, a leaked token, or a 3am page.
+**Lint Harness CI/CD pipelines before they reach production.**
+
+[![CI](https://github.com/gerardrecinto/harness-doctor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gerardrecinto/harness-doctor/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/gerardrecinto/harness-doctor/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/gerardrecinto/harness-doctor/actions/workflows/codeql.yml)
+[![Release](https://img.shields.io/github/v/release/gerardrecinto/harness-doctor)](https://github.com/gerardrecinto/harness-doctor/releases)
+[![Python](https://img.shields.io/badge/python-3.10%20to%203.13-blue)](pyproject.toml)
+[![License](https://img.shields.io/github/license/gerardrecinto/harness-doctor)](LICENSE)
+
+<img src="docs/assets/demo.gif" alt="harness-doctor flags a pipeline with a literal token, a latest image and an unapproved prod deploy" width="760" />
+
+</div>
 
 Harness will happily save a pipeline that deploys `prod` with no approval, pulls `node:latest`, and keeps an API token in the YAML. harness-doctor reads your `.harness/` folder and tells you, with a line number and a fix.
 
