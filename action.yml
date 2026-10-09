@@ -1,0 +1,43 @@
+name: harness-doctor
+description: Lint Harness CI/CD pipeline YAML and report findings in the PR.
+branding:
+  icon: activity
+  color: blue
+inputs:
+  path:
+    description: Directory or file to check
+    default: .harness
+  fail-on:
+    description: Lowest severity that fails the job (error, warning, info, never)
+    default: error
+  schema:
+    description: Also validate against Harness's published JSON schema
+    default: "false"
+  sarif:
+    description: Upload findings to GitHub code scanning
+    default: "true"
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - shell: bash
+      run: pip install "${{ github.action_path }}[schema]"
+    - shell: bash
+      env:
+        TARGET: ${{ inputs.path }}
+        FAIL_ON: ${{ inputs.fail-on }}
+      run: |
+        harness-doctor check "$TARGET" --format sarif --fail-on never > harness-doctor.sarif
+        harness-doctor check "$TARGET" --fail-on "$FAIL_ON"
+    - if: inputs.schema == 'true'
+      shell: bash
+      env:
+        TARGET: ${{ inputs.path }}
+      run: harness-doctor schema "$TARGET"
+    - if: inputs.sarif == 'true' && always()
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: harness-doctor.sarif
+        category: harness-doctor

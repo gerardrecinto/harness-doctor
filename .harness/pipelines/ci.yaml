@@ -1,0 +1,95 @@
+pipeline:
+  name: harness-doctor CI
+  identifier: harness_doctor_ci
+  projectIdentifier: default
+  orgIdentifier: default
+  description: Test on every supported Python, then run harness-doctor against its own pipelines.
+  tags:
+    owner: platform
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.github
+        repoName: harness-doctor
+        build: <+input>
+  stages:
+    - parallel:
+        - stage:
+            name: py310
+            identifier: py310
+            description: ""
+            template:
+              templateRef: python_quality_stage
+              versionLabel: v1
+              templateInputs:
+                type: CI
+                variables:
+                  - name: python_version
+                    type: String
+                    value: "3.10"
+        - stage:
+            name: py313
+            identifier: py313
+            description: ""
+            template:
+              templateRef: python_quality_stage
+              versionLabel: v1
+              templateInputs:
+                type: CI
+                variables:
+                  - name: python_version
+                    type: String
+                    value: "3.13"
+    - stage:
+        name: dogfood
+        identifier: dogfood
+        description: The tool lints and schema-checks the pipelines that build it.
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            paths:
+              - ~/.cache/pip
+              - ~/.cache/harness-doctor
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: install
+                  identifier: install
+                  timeout: 5m
+                  spec:
+                    shell: Sh
+                    command: |-
+                      python3 -m venv .venv
+                      .venv/bin/pip install -q -e '.[schema]'
+              - step:
+                  type: Run
+                  name: lint pipelines
+                  identifier: lint_pipelines
+                  timeout: 2m
+                  spec:
+                    shell: Sh
+                    command: .venv/bin/harness-doctor check .harness --fail-on warning --format sarif > harness-doctor.sarif
+              - step:
+                  type: Run
+                  name: validate schema
+                  identifier: validate_schema
+                  timeout: 3m
+                  spec:
+                    shell: Sh
+                    command: .venv/bin/harness-doctor schema .harness
+          sharedPaths: []
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort

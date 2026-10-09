@@ -1,0 +1,97 @@
+pipeline:
+  name: shop api
+  identifier: shop_api
+  projectIdentifier: default
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.github
+        repoName: shop-api
+        build: <+input>
+  stages:
+    - stage:
+        name: build
+        identifier: build
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            paths:
+              - ~/.npm
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: test
+                  identifier: test
+                  timeout: 10m
+                  spec:
+                    shell: Sh
+                    connectorRef: account.harnessImage
+                    image: node:22.9-slim
+                    command: npm ci && npm test
+                    envVariables:
+                      BRANCH: <+codebase.branch>
+                      NPM_TOKEN: <+secrets.getValue("npm_token")>
+    - stage:
+        name: approve prod
+        identifier: approve_prod
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: HarnessApproval
+                  name: release manager
+                  identifier: release_manager
+                  timeout: 1d
+                  spec:
+                    approvalMessage: Ship it?
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      userGroups:
+                        - account._account_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: true
+    - stage:
+        name: deploy prod
+        identifier: deploy_prod
+        type: Deployment
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: StageRollback
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: shop_api
+          environment:
+            environmentRef: prod
+            infrastructureDefinitions:
+              - identifier: prod_cluster
+          execution:
+            steps:
+              - step:
+                  type: K8sRollingDeploy
+                  name: rolling deploy
+                  identifier: rolling_deploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false
+            rollbackSteps:
+              - step:
+                  type: K8sRollingRollback
+                  name: rolling rollback
+                  identifier: rolling_rollback
+                  timeout: 10m
+                  spec: {}

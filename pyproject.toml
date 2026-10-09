@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harness-doctor"
+version = "0.1.0"
+description = "Lint Harness CI/CD pipelines for the mistakes that cost you a prod incident or a leaked token."
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.10"
+dependencies = ["PyYAML>=6.0"]
+keywords = ["harness", "ci", "cd", "pipeline", "lint", "devsecops", "sarif"]
+
+[project.optional-dependencies]
+schema = ["jsonschema>=4.18"]
+dev = ["pytest>=8", "ruff>=0.6", "jsonschema>=4.18", "build"]
+
+[project.scripts]
+harness-doctor = "harness_doctor.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501"]

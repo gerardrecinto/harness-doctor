@@ -1,0 +1,60 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.10", "3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+      - run: pip install -e '.[dev]'
+      - run: ruff check src tests
+      - run: pytest -q
+
+  pipelines:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e '.[schema]'
+      - name: Lint this repo's own Harness pipelines
+        run: harness-doctor check .harness examples/good --fail-on warning
+      - name: Validate them against Harness's published schema
+        run: harness-doctor schema .harness examples
+      - name: SARIF for code scanning
+        if: github.event_name == 'push'
+        run: harness-doctor check examples/bad --format sarif --fail-on never > harness-doctor.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: github.event_name == 'push'
+        with:
+          sarif_file: harness-doctor.sarif
+          category: harness-doctor-demo
+
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: open-policy-agent/setup-opa@v2
+        with:
+          version: 1.21.1
+      - run: opa test --v0-compatible policies -v

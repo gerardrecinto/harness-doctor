@@ -1,0 +1,38 @@
+trigger:
+  name: pull request
+  identifier: pull_request
+  enabled: true
+  description: Run CI on every PR into main and cancel the run it replaces.
+  tags: {}
+  orgIdentifier: default
+  projectIdentifier: default
+  pipelineIdentifier: harness_doctor_ci
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: PullRequest
+        spec:
+          connectorRef: account.github
+          autoAbortPreviousExecutions: true
+          payloadConditions:
+            - key: targetBranch
+              operator: Equals
+              value: main
+          headerConditions: []
+          repoName: harness-doctor
+          actions:
+            - Open
+            - Reopen
+            - Synchronize
+  inputYaml: |
+    pipeline:
+      identifier: harness_doctor_ci
+      properties:
+        ci:
+          codebase:
+            build:
+              type: PR
+              spec:
+                number: <+trigger.prNumber>

@@ -1,0 +1,70 @@
+template:
+  name: Python quality stage
+  identifier: python_quality_stage
+  versionLabel: v1
+  type: Stage
+  projectIdentifier: default
+  orgIdentifier: default
+  description: Lint, test and build a Python package on one interpreter version.
+  tags:
+    owner: platform
+  spec:
+    type: CI
+    spec:
+      cloneCodebase: true
+      caching:
+        enabled: true
+        paths:
+          - ~/.cache/pip
+      platform:
+        os: Linux
+        arch: Amd64
+      runtime:
+        type: Cloud
+        spec: {}
+      execution:
+        steps:
+          - step:
+              type: Run
+              name: install
+              identifier: install
+              timeout: 5m
+              spec:
+                shell: Sh
+                command: |-
+                  python<+stage.variables.python_version> -m venv .venv
+                  .venv/bin/pip install -q -e '.[dev]'
+          - parallel:
+              - step:
+                  type: Run
+                  name: lint
+                  identifier: lint
+                  timeout: 3m
+                  spec:
+                    shell: Sh
+                    command: .venv/bin/ruff check src tests
+              - step:
+                  type: Run
+                  name: test
+                  identifier: test
+                  timeout: 10m
+                  spec:
+                    shell: Sh
+                    command: .venv/bin/pytest -q --junitxml=report.xml
+                    reports:
+                      type: JUnit
+                      spec:
+                        paths:
+                          - report.xml
+    variables:
+      - name: python_version
+        type: String
+        description: Interpreter to test against
+        required: true
+        value: <+input>.default(3.12).allowedValues(3.10,3.11,3.12,3.13)
+    failureStrategies:
+      - onFailure:
+          errors:
+            - AllErrors
+          action:
+            type: Abort

@@ -1,0 +1,88 @@
+pipeline:
+  name: harness-doctor release
+  identifier: harness_doctor_release
+  projectIdentifier: default
+  orgIdentifier: default
+  description: Build the wheel and publish to PyPI after a human approves.
+  tags:
+    owner: platform
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.github
+        repoName: harness-doctor
+        build: <+input>
+  stages:
+    - stage:
+        name: approve release
+        identifier: approve_release
+        type: Approval
+        spec:
+          execution:
+            steps:
+              - step:
+                  type: HarnessApproval
+                  name: maintainer
+                  identifier: maintainer
+                  timeout: 1d
+                  spec:
+                    approvalMessage: Publish this tag to PyPI?
+                    includePipelineExecutionHistory: true
+                    approvers:
+                      userGroups:
+                        - account._account_all_users
+                      minimumCount: 1
+                      disallowPipelineExecutor: false
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort
+    - stage:
+        name: publish
+        identifier: publish
+        type: CI
+        spec:
+          cloneCodebase: true
+          caching:
+            enabled: true
+            paths:
+              - ~/.cache/pip
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: build
+                  identifier: build
+                  timeout: 5m
+                  spec:
+                    shell: Sh
+                    command: |-
+                      python3 -m venv .venv
+                      .venv/bin/pip install -q build twine
+                      .venv/bin/python -m build
+                      .venv/bin/twine check dist/*
+              - step:
+                  type: Run
+                  name: upload
+                  identifier: upload
+                  timeout: 5m
+                  spec:
+                    shell: Sh
+                    command: .venv/bin/twine upload dist/*
+                    envVariables:
+                      TWINE_USERNAME: __token__
+                      TWINE_PASSWORD: <+secrets.getValue("pypi_token")>
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort

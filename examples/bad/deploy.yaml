@@ -1,0 +1,72 @@
+pipeline:
+  name: shop api
+  identifier: shop_api
+  projectIdentifier: default
+  orgIdentifier: default
+  properties:
+    ci:
+      codebase:
+        connectorRef: account.github
+        repoName: shop-api
+        build: <+input>
+  stages:
+    - stage:
+        name: build
+        identifier: build
+        type: CI
+        spec:
+          cloneCodebase: true
+          platform:
+            os: Linux
+            arch: Amd64
+          runtime:
+            type: Cloud
+            spec: {}
+          execution:
+            steps:
+              - step:
+                  type: Run
+                  name: install tools
+                  identifier: install_tools
+                  spec:
+                    shell: Sh
+                    command: curl -fsSL https://get.example.dev/install.sh | sh
+              - step:
+                  type: Run
+                  name: tag release
+                  identifier: tag_release
+                  timeout: 5m
+                  spec:
+                    shell: Sh
+                    connectorRef: account.harnessImage
+                    image: node:latest
+                    command: echo "building <+codebase.branch>" && npm ci && npm test
+                    envVariables:
+                      NPM_TOKEN: abc123-not-a-secret-reference
+    - stage:
+        name: deploy prod
+        identifier: deploy_prod
+        type: Deployment
+        failureStrategies:
+          - onFailure:
+              errors:
+                - AllErrors
+              action:
+                type: Abort
+        spec:
+          deploymentType: Kubernetes
+          service:
+            serviceRef: shop_api
+          environment:
+            environmentRef: prod
+            infrastructureDefinitions:
+              - identifier: prod_cluster
+          execution:
+            steps:
+              - step:
+                  type: K8sRollingDeploy
+                  name: rolling deploy
+                  identifier: rolling_deploy
+                  timeout: 10m
+                  spec:
+                    skipDryRun: false

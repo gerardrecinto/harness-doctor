@@ -1,0 +1,33 @@
+trigger:
+  name: github release
+  identifier: github_release
+  enabled: true
+  description: Start the release pipeline when a GitHub release is published.
+  tags: {}
+  orgIdentifier: default
+  projectIdentifier: default
+  pipelineIdentifier: harness_doctor_release
+  source:
+    type: Webhook
+    spec:
+      type: Github
+      spec:
+        type: Release
+        spec:
+          connectorRef: account.github
+          autoAbortPreviousExecutions: false
+          payloadConditions: []
+          headerConditions: []
+          repoName: harness-doctor
+          actions:
+            - Publish
+  inputYaml: |
+    pipeline:
+      identifier: harness_doctor_release
+      properties:
+        ci:
+          codebase:
+            build:
+              type: tag
+              spec:
+                tag: <+trigger.payload.release.tag_name>
