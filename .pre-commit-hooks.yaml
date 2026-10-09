@@ -1,0 +1,6 @@
+- id: harness-doctor
+  name: harness-doctor
+  description: Lint Harness pipeline YAML
+  entry: harness-doctor check --fail-on warning
+  language: python
+  files: ^\.harness/.*\.ya?ml$

@@ -4,6 +4,8 @@ import argparse
 import sys
 import textwrap
 
+import yaml
+
 from . import __version__
 from .engine import check_file
 from .model import discover
@@ -56,7 +58,7 @@ def _run(args: argparse.Namespace) -> int:
                 findings += validate_file(path)
             else:
                 findings += check_file(path, args.select, args.ignore)
-        except Exception as exc:  # unreadable or malformed YAML should not hide the other files
+        except (OSError, ValueError, yaml.YAMLError) as exc:
             print(f"harness-doctor: {path}: {exc}", file=sys.stderr)
             return 2
 

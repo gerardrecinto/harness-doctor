@@ -242,3 +242,23 @@ def test_explain_and_rules(capsys):
     assert "approval" in capsys.readouterr().out.lower()
     assert main(["rules"]) == 0
     assert main(["explain", "HD999"]) == 2
+
+
+def test_github_annotations(capsys):
+    main(["check", str(ROOT / "examples/bad"), "--format", "github", "--fail-on", "never"])
+    lines = capsys.readouterr().out.splitlines()
+    assert lines[0].startswith("::notice file=") and "title=HD009" in lines[0]
+    assert any(line.startswith("::error ") for line in lines)
+
+
+def test_malformed_yaml_exits_2(tmp_path, capsys):
+    bad = tmp_path / "bad.yaml"
+    bad.write_text("pipeline: [unclosed")
+    assert main([str(bad)]) == 2
+    assert "bad.yaml" in capsys.readouterr().err
+
+
+def test_non_mapping_yaml_exits_2(tmp_path):
+    bad = tmp_path / "list.yaml"
+    bad.write_text("- a\n- b\n")
+    assert main([str(bad)]) == 2

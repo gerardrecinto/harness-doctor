@@ -57,6 +57,7 @@ harness-doctor check .harness --fail-on warning     # stricter
 harness-doctor check .harness --ignore HD009
 harness-doctor check .harness --format sarif        # for GitHub code scanning
 harness-doctor check .harness --format json
+harness-doctor check .harness --format github       # inline annotations on the PR diff
 harness-doctor schema .harness                      # validate against Harness's published JSON schema
 ```
 
@@ -81,6 +82,16 @@ Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` bad input.
 ```
 
 Findings show up in the Security tab through SARIF.
+
+### pre-commit
+
+```yaml
+repos:
+  - repo: https://github.com/gerardrecinto/harness-doctor
+    rev: v0.1.0
+    hooks:
+      - id: harness-doctor
+```
 
 ### Harness policy
 
