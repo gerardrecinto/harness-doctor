@@ -84,4 +84,15 @@ def as_sarif(findings: list[Finding], files: int) -> str:
     return json.dumps(doc, indent=2)
 
 
-FORMATS = {"text": as_text, "json": as_json, "sarif": as_sarif}
+def as_github(findings: list[Finding], files: int) -> str:
+    """Workflow commands: GitHub shows these as inline annotations on the PR diff."""
+    level = {"error": "error", "warning": "warning", "info": "notice"}
+    lines = []
+    for f in findings:
+        text = f.message + (f". Fix: {f.hint}" if f.hint else "")
+        text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        lines.append(f"::{level[f.severity]} file={f.file},line={f.line},title={f.rule}::{text}")
+    return "\n".join(lines)
+
+
+FORMATS = {"text": as_text, "json": as_json, "sarif": as_sarif, "github": as_github}

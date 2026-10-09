@@ -8,9 +8,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
@@ -27,6 +32,7 @@ jobs:
 
   pipelines:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     permissions:
       contents: read
       security-events: write
@@ -38,7 +44,7 @@ jobs:
           cache: pip
       - run: pip install -e '.[schema]'
       - name: Lint this repo's own Harness pipelines
-        run: harness-doctor check .harness examples/good --fail-on warning
+        run: harness-doctor check .harness examples/good --fail-on warning --format github
       - name: Validate them against Harness's published schema
         run: harness-doctor schema .harness examples
       - name: SARIF for code scanning
@@ -52,6 +58,7 @@ jobs:
 
   policy:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - uses: open-policy-agent/setup-opa@v2
