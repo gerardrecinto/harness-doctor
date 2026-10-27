@@ -85,22 +85,27 @@ Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` bad input.
 ### GitHub Action
 
 ```yaml
-- uses: actions/checkout@v4
-- uses: gerardrecinto/harness-doctor@main
-  with:
-    path: .harness
-    fail-on: warning
-    schema: "true"
+permissions:
+  contents: read
+  security-events: write
+
+steps:
+  - uses: actions/checkout@v7
+  - uses: gerardrecinto/harness-doctor@v0.1.1
+    with:
+      path: .harness
+      fail-on: warning
+      schema: "true"
 ```
 
-Findings show up in the Security tab through SARIF.
+Findings show up as annotations on the pull request and, through SARIF, in the Security tab. The SARIF upload needs `security-events: write` and code scanning on the repo. On fork pull requests and private repos without it, the upload is skipped with a warning and the lint result still decides the job. Set `sarif: "false"` to turn it off.
 
 ### pre-commit
 
 ```yaml
 repos:
   - repo: https://github.com/gerardrecinto/harness-doctor
-    rev: v0.1.0
+    rev: v0.1.1
     hooks:
       - id: harness-doctor
 ```

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "harness-doctor"
-version = "0.1.0"
+version = "0.1.1"
 description = "Lint Harness CI/CD pipelines for the mistakes that cost you a prod incident or a leaked token."
 readme = "README.md"
 license = { text = "MIT" }

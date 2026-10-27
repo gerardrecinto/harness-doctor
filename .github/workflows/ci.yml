@@ -56,6 +56,19 @@ jobs:
           sarif_file: harness-doctor.sarif
           category: harness-doctor-demo
 
+  action:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Run the Action as a user would
+        uses: ./
+        with:
+          path: .harness
+          fail-on: warning
+          schema: "true"
+          sarif: "false"
+
   policy:
     runs-on: ubuntu-latest
     timeout-minutes: 5
