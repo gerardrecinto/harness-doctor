@@ -1,7 +1,7 @@
 pipeline {
     agent any
     environment {
-        API_TOKEN = 'abcd1234efgh5678'
+        API_TOKEN = 'not-a-secret-placeholder'
     }
     stages {
         stage('Build') {

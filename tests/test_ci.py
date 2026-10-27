@@ -268,7 +268,8 @@ def test_jk001_literal_credential_but_not_credentials_helper(tmp_path):
 
 
 def test_jk001_known_token_shape(tmp_path):
-    body = CLEAN_JENKINS.replace("make build", "curl -H 'x: AKIAABCDEFGHIJKLMNOP' h")
+    key = "AKIA" + "IOSFODNN7EXAMPLE"  # AWS's documented example key, split so scanners do not flag this file
+    body = CLEAN_JENKINS.replace("make build", f"curl -H 'x: {key}' h")
     assert "JK001" in ids(jenkins(tmp_path, body))
 
 
