@@ -1,0 +1,4 @@
+# Findings in an earlier commit of the GitHub Actions / Jenkins rules PR: a placeholder token in the demo Jenkinsfile and AWS's documented example key in a test.
+# Both were replaced in the next commit. Nothing real was ever committed.
+99a1b6045acf19e4b950a7736e62b6283a5db8a1:examples/bad/Jenkinsfile:generic-api-key:4
+99a1b6045acf19e4b950a7736e62b6283a5db8a1:tests/test_ci.py:aws-access-token:271
