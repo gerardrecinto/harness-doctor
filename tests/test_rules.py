@@ -245,7 +245,7 @@ def test_explain_and_rules(capsys):
 
 
 def test_github_annotations(capsys):
-    main(["check", str(ROOT / "examples/bad"), "--format", "github", "--fail-on", "never"])
+    main(["check", str(ROOT / "examples/bad/deploy.yaml"), "--format", "github", "--fail-on", "never"])
     lines = capsys.readouterr().out.splitlines()
     assert lines[0].startswith("::notice file=") and "title=HD009" in lines[0]
     assert any(line.startswith("::error ") for line in lines)

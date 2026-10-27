@@ -45,6 +45,8 @@ jobs:
       - run: pip install -e '.[schema]'
       - name: Lint this repo's own Harness pipelines
         run: harness-doctor check .harness examples/good --fail-on warning --format github
+      - name: Lint this repo's own GitHub Actions workflows
+        run: harness-doctor check .github/workflows --fail-on error --format github
       - name: Validate them against Harness's published schema
         run: harness-doctor schema .harness examples
       - name: SARIF for code scanning

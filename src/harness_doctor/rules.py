@@ -29,14 +29,17 @@ class Rule:
     title: str
     why: str
     check: Callable[[Doc], Iterator[tuple[int, str, str]]]
+    # which kind of file the rule reads: "harness" pipeline YAML, "github" Actions workflow,
+    # or "jenkins" declarative Jenkinsfile
+    kind: str = "harness"
 
 
 RULES: dict[str, Rule] = {}
 
 
-def rule(id: str, severity: str, title: str, why: str):
+def rule(id: str, severity: str, title: str, why: str, kind: str = "harness"):
     def register(fn):
-        RULES[id] = Rule(id, severity, title, why, fn)
+        RULES[id] = Rule(id, severity, title, why, fn, kind)
         return fn
 
     return register

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
@@ -34,6 +35,8 @@ class Doc:
     lines: list[str]
     stages: list[Node] = field(default_factory=list)
     steps: list[tuple[Node, Node | None]] = field(default_factory=list)
+    # "harness" (default), "github" for an Actions workflow, "jenkins" for a Jenkinsfile
+    flavor: str = "harness"
 
     @property
     def kind(self) -> str | None:
@@ -59,11 +62,27 @@ def _walk(node, stage, doc: Doc) -> None:
             _walk(item, stage, doc)
 
 
+JENKINSFILE = re.compile(r"^Jenkinsfile|\.jenkinsfile$", re.IGNORECASE)
+
+
+def is_jenkinsfile(path: Path) -> bool:
+    return bool(JENKINSFILE.search(path.name))
+
+
+def _is_workflow(root: Node) -> bool:
+    # YAML 1.1 reads the key `on` as the boolean True, so accept both spellings
+    return "jobs" in root and ("on" in root or True in root)
+
+
 def parse(path: Path) -> Doc:
     text = path.read_text(encoding="utf-8")
+    if is_jenkinsfile(path):
+        return Doc(path=path, root=Node(), lines=text.splitlines(), flavor="jenkins")
     root = yaml.load(text, Loader=_Loader)
     if not isinstance(root, Node):
         raise ValueError("top level is not a mapping")
+    if _is_workflow(root):
+        return Doc(path=path, root=root, lines=text.splitlines(), flavor="github")
     doc = Doc(path=path, root=root, lines=text.splitlines())
     template = root.get("template")
     if isinstance(template, dict) and isinstance(template.get("spec"), dict):
@@ -86,7 +105,9 @@ def discover(paths: list[str]) -> list[Path]:
     for raw in paths:
         p = Path(raw)
         if p.is_dir():
-            found += sorted(x for x in p.rglob("*") if x.suffix in (".yaml", ".yml"))
+            found += sorted(
+                x for x in p.rglob("*") if x.suffix in (".yaml", ".yml") or (x.is_file() and is_jenkinsfile(x))
+            )
         elif p.is_file():
             found.append(p)
         else:

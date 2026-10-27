@@ -4,3 +4,9 @@
   entry: harness-doctor check --fail-on warning
   language: python
   files: ^\.harness/.*\.ya?ml$
+- id: harness-doctor-workflows
+  name: harness-doctor (GitHub Actions and Jenkins)
+  description: Lint GitHub Actions workflows and Jenkinsfiles
+  entry: harness-doctor check --fail-on error
+  language: python
+  files: ^(\.github/workflows/.*\.ya?ml|(.*/)?Jenkinsfile[^/]*|.*\.jenkinsfile)$

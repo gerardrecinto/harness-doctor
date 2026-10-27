@@ -1,0 +1,28 @@
+pipeline {
+    agent { label 'linux-build' }
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        disableConcurrentBuilds()
+    }
+    environment {
+        API_TOKEN = credentials('api-token')
+    }
+    stages {
+        stage('Build') {
+            agent { docker { image 'node:20.11-alpine' } }
+            steps {
+                sh 'echo building "$BRANCH_NAME"'
+            }
+        }
+        stage('Approve production') {
+            steps {
+                input message: 'Deploy to production?', ok: 'Deploy'
+            }
+        }
+        stage('Deploy to production') {
+            steps {
+                sh './deploy.sh production'
+            }
+        }
+    }
+}

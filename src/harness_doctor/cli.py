@@ -8,7 +8,7 @@ import yaml
 
 from . import __version__
 from .engine import check_file
-from .model import discover
+from .model import discover, parse
 from .report import FORMATS
 from .rules import RULES, SEVERITY_RANK
 
@@ -22,14 +22,14 @@ def _csv(value: str) -> set[str]:
 def _parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="harness-doctor",
-        description="Lint Harness CI/CD pipeline YAML. 'harness-doctor PATH' is the same as 'harness-doctor check PATH'.",
+        description="Lint CI/CD pipelines: Harness YAML, GitHub Actions workflows and Jenkinsfiles. 'harness-doctor PATH' is the same as 'harness-doctor check PATH'.",
     )
     p.add_argument("--version", action="version", version=__version__)
     sub = p.add_subparsers(dest="cmd", required=True)
 
     for name, help_ in (("check", "run the lint rules"), ("schema", "validate against Harness's published JSON schema")):
         s = sub.add_parser(name, help=help_)
-        s.add_argument("paths", nargs="+", help="files or directories (.yaml/.yml)")
+        s.add_argument("paths", nargs="+", help="files or directories (.yaml/.yml and Jenkinsfile)")
         s.add_argument("--format", choices=sorted(FORMATS), default="text")
         s.add_argument("--fail-on", choices=["error", "warning", "info", "never"], default="error")
         if name == "check":
@@ -55,7 +55,9 @@ def _run(args: argparse.Namespace) -> int:
             if args.cmd == "schema":
                 from .schema import validate_file
 
-                findings += validate_file(path)
+                # Harness publishes a JSON schema for its own YAML only
+                if parse(path).flavor == "harness":
+                    findings += validate_file(path)
             else:
                 findings += check_file(path, args.select, args.ignore)
         except (OSError, ValueError, yaml.YAMLError) as exc:
@@ -78,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
 
     if args.cmd == "rules":
         for r in RULES.values():
-            print(f"{r.id}  {r.severity:<7}  {r.title}")
+            print(f"{r.id}  {r.severity:<7}  {r.kind:<7}  {r.title}")
         return 0
     if args.cmd == "explain":
         r = RULES.get(args.rule.upper())

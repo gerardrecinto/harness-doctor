@@ -5,12 +5,12 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "harness-doctor"
 version = "0.1.1"
-description = "Lint Harness CI/CD pipelines for the mistakes that cost you a prod incident or a leaked token."
+description = "Lint Harness pipelines, GitHub Actions workflows and Jenkinsfiles for the mistakes that cost you a prod incident or a leaked token."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 dependencies = ["PyYAML>=6.0"]
-keywords = ["harness", "ci", "cd", "pipeline", "lint", "devsecops", "sarif"]
+keywords = ["harness", "github-actions", "jenkins", "ci", "cd", "pipeline", "lint", "devsecops", "sarif"]
 
 [project.optional-dependencies]
 schema = ["jsonschema>=4.18"]

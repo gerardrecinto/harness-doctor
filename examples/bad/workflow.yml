@@ -1,0 +1,16 @@
+name: release
+on:
+  pull_request_target:
+    types: [opened]
+permissions: write-all
+jobs:
+  build:
+    runs-on: self-hosted
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: someorg/deploy-action@v2
+      - run: echo "Building ${{ github.event.pull_request.title }}"
+      - run: curl -sL https://example.com/install.sh | sh
+      - run: ./deploy.sh ${{ secrets.DEPLOY_TOKEN }}

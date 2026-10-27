@@ -3,10 +3,11 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
+from . import ci  # noqa: F401  (registers the GitHub Actions and Jenkins rules)
 from .model import Doc, parse
 from .rules import RULES, Finding
 
-IGNORE = re.compile(r"#\s*harness-doctor:\s*ignore\s+([A-Z0-9, ]+)")
+IGNORE = re.compile(r"(?:#|//)\s*harness-doctor:\s*ignore\s+([A-Z0-9, ]+)")
 
 
 def _suppressed(doc: Doc, rule_id: str, line: int) -> bool:
@@ -23,6 +24,8 @@ def check_file(path: Path, select: set[str] | None = None, ignore: set[str] | No
     doc = parse(path)
     found: list[Finding] = []
     for rule in RULES.values():
+        if rule.kind != doc.flavor:
+            continue
         if (select and rule.id not in select) or (ignore and rule.id in ignore):
             continue
         for line, message, hint in rule.check(doc):

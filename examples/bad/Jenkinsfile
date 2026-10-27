@@ -1,0 +1,20 @@
+pipeline {
+    agent any
+    environment {
+        API_TOKEN = 'abcd1234efgh5678'
+    }
+    stages {
+        stage('Build') {
+            agent { docker { image 'node:latest' } }
+            steps {
+                sh "echo building ${params.BRANCH}"
+                sh 'curl -s https://example.com/setup.sh | sh'
+            }
+        }
+        stage('Deploy to prod') {
+            steps {
+                sh './deploy.sh production'
+            }
+        }
+    }
+}
