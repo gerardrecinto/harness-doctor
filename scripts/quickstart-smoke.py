@@ -10,7 +10,7 @@ root = Path(__file__).resolve().parents[1]
 readme = (root / "README.md").read_text()
 commands = readme.split("```", 2)[1].strip()
 site = (root / "site/index.html").read_text().split('id="install"', 1)[1]
-site_commands = html.unescape(re.search(r"<pre><code>(.*?)</code></pre>", site, re.S)[1]).strip()
+site_commands = html.unescape(re.search(r"<pre[^>]*><code>(.*?)</code></pre>", site, re.S)[1]).strip()
 assert site_commands == commands, "site and README install instructions diverged"
 url = "https://github.com/gerardrecinto/harness-doctor"
 assert commands.count(url) == 1, "README quick start needs one clone command"
