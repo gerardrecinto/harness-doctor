@@ -12,6 +12,8 @@
 - Dependabot auto-merge now covers patch and minor updates only.
 - The browser demo loads Pyodide with a Subresource Integrity hash.
 
+- Load the browser demo Python runtime only after Run checks or sample selection. Keep the sample and install help available before activation, with real-engine browser regression checks.
+
 ## v0.1.1
 
 - The Action now prints GitHub annotations, so findings appear on the pull request. It printed plain text before.
