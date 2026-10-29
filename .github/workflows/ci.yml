@@ -27,7 +27,7 @@ jobs:
           python-version: ${{ matrix.python }}
           cache: pip
       - run: pip install -e '.[dev]'
-      - run: ruff check src tests
+      - run: ruff check src tests scripts
       - run: pytest -q
 
   pipelines:
@@ -80,3 +80,19 @@ jobs:
         with:
           version: 1.21.1
       - run: opa test --v0-compatible policies -v
+
+  quickstart:
+    name: Fresh install (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Run README quick start outside the checkout
+        run: python3 scripts/quickstart-smoke.py

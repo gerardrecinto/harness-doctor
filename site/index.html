@@ -190,18 +190,19 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <section id="install" class="install"><div class="wrap">
   <h2>Quick start</h2>
-  <p class="sub">Needs Python 3.10 or newer. This installs the current <code>main</code> branch.</p>
+  <p class="sub">Needs Git and Python 3.10 or newer as <code>python3</code>, in a macOS or Linux shell. This installs the current <code>main</code> branch.</p>
   <div class="cols2">
     <div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
-<pre><code>python -m venv .venv &amp;&amp; . .venv/bin/activate
-pip install "harness-doctor[schema] @ git+https://github.com/gerardrecinto/harness-doctor"
-harness-doctor check .harness .github/workflows</code></pre></div>
+<pre><code>git clone https://github.com/gerardrecinto/harness-doctor &amp;&amp; cd harness-doctor
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install .
+harness-doctor check examples/bad/deploy.yaml</code></pre></div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
 <pre><code>harness-doctor check .harness --fail-on warning
-harness-doctor check .harness --format sarif
+harness-doctor check .harness --format sarif &gt; findings.sarif
 harness-doctor explain HD007</code></pre></div>
-      <p class="pw">The last two commands save a report file that GitHub can read (SARIF) and explain one rule.</p>
+      <p class="pw">The sample exits 1 because it contains errors. Run <code>harness-doctor check examples/good</code> for a clean result. To check your own repo, run <code>check</code> on its pipeline folder. The SARIF command saves a report file that GitHub can read; <code>explain</code> describes one rule.</p>
       <p class="note">Exit code 0 means clean, 1 means findings, 2 means bad input such as a missing folder.</p>
     </div>
     <div>
