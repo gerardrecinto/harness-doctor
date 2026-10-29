@@ -1,5 +1,7 @@
 import pytest
 
+pytest.importorskip("jsonschema")
+
 from harness_doctor import schema
 from harness_doctor.cli import main
 
