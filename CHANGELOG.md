@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The README and browser site quick starts use `python3`, clone runnable examples, and explain the deliberate failure. CI verifies the same instructions in a fresh environment on macOS and Linux.
+
 - Rules for GitHub Actions workflows (GA001 to GA009): unpinned third-party actions, a missing or `write-all` token scope, script injection from event data, `pull_request_target` checking out the PR head, secrets written into scripts, self-hosted runners on pull requests, missing job timeouts and `curl | sh`.
 - Rules for Jenkins declarative pipelines (JK001 to JK007): literal credentials, `agent any`, no timeout, Groovy injection in double-quoted `sh` steps, unpinned images, a production deploy with no `input` approval and `curl | sh`.
 - `check` picks the rule set from the file: Harness YAML, an Actions workflow, or a `Jenkinsfile*`. `rules` shows each rule's kind, `schema` skips files that are not Harness YAML, and suppression comments accept `//` as well as `#`.
