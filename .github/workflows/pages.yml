@@ -27,10 +27,11 @@ jobs:
       - name: Assemble site
         run: |
           mkdir -p _site/py _site/examples
-          cp site/index.html _site/
-          for f in __init__ model rules engine report; do cp src/harness_doctor/$f.py _site/py/; done
+          cp site/index.html site/og.png _site/
+          for f in __init__ model rules ci engine report; do cp src/harness_doctor/$f.py _site/py/; done
           cp examples/bad/deploy.yaml _site/examples/bad.yaml
           cp examples/good/deploy.yaml _site/examples/good.yaml
+          cp examples/bad/workflow.yml examples/bad/Jenkinsfile _site/examples/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v5
         with:
