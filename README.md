@@ -5,7 +5,7 @@
 
 harness-doctor is a command-line tool that reads your CI/CD pipeline files and points out risky settings, with the line number and a fix. It is for people who write or review pipelines in Harness, GitHub Actions or Jenkins.
 
-Put simply: it reads your pipeline files and warns you about risky settings before they cause a problem.
+New here? It reads your pipeline files and warns you about risky settings before they cause a problem.
 
 ## Try it in 60 seconds
 
@@ -49,7 +49,7 @@ There is also a browser demo that runs the same code, with nothing uploaded: htt
 <details>
 <summary>Harness rules (HD001 to HD009)</summary>
 
-Put simply: each row is one mistake the tool looks for in Harness pipelines.
+Each row is one mistake the tool looks for in Harness pipelines.
 
 | Rule | Severity | Catches |
 |------|----------|---------|
@@ -128,7 +128,7 @@ Jenkins checks read the Groovy text, not a parsed model, so they target declarat
 <details>
 <summary>Commands, output formats and suppressing a finding</summary>
 
-Put simply: these commands change how strict the check is and how the results are shown. SARIF is a standard report file that GitHub reads to show problems in its Security tab.
+These commands change how strict the check is and how the results are shown. SARIF is a standard report file that GitHub reads to show problems in its Security tab.
 
 ```
 harness-doctor check .harness                       # exit 1 on any error
@@ -154,7 +154,7 @@ Exit codes: `0` clean, `1` findings at or above `--fail-on`, `2` bad input.
 <details>
 <summary>GitHub Action and pre-commit</summary>
 
-Put simply: these run the check for you on every pull request or every commit.
+These run the check for you on every pull request or every commit.
 
 ```yaml
 permissions:
@@ -187,7 +187,7 @@ repos:
 <details>
 <summary>Harness policy (OPA)</summary>
 
-Put simply: this makes Harness itself refuse to save a risky pipeline.
+This makes Harness itself refuse to save a risky pipeline.
 
 [`policies/pipeline_guardrails.rego`](policies/pipeline_guardrails.rego) enforces the image, timeout and prod-approval rules inside Harness itself. Add it to a policy set on the Pipeline entity, "On Save", and the save fails instead of waiting for someone to notice. It has OPA tests: `opa test --v0-compatible policies`.
 
