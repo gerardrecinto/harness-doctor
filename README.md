@@ -9,7 +9,7 @@ New here? It reads your pipeline files and warns you about risky settings before
 
 ## Try it in 60 seconds
 
-You need Python 3.10 or newer. These commands install from the current `main` branch and lint a deliberately bad example.
+You need Git and Python 3.10 or newer, available as `python3`. Run these commands in a macOS or Linux shell to install from the current `main` branch and lint a deliberately bad example.
 
 ```
 git clone https://github.com/gerardrecinto/harness-doctor && cd harness-doctor
@@ -196,7 +196,7 @@ This makes Harness itself refuse to save a risky pipeline.
 <details>
 <summary>The pipelines in .harness/</summary>
 
-This repo is built by the pipelines in [`.harness/`](.harness), and harness-doctor lints them on every run.
+The [`.harness/`](.harness) folder contains example CI and release pipelines for a Harness account. GitHub Actions lints and schema-checks these files on every push and pull request. A passing schema check does not verify a run inside Harness.
 
 | File | What it shows |
 |------|---------------|

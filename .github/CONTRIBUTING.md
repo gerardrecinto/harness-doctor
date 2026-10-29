@@ -3,7 +3,7 @@
 ## Setup
 
 ```
-python -m venv .venv && .venv/bin/pip install -e '.[dev]'
+python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest -q
 .venv/bin/ruff check src tests
 opa test --v0-compatible policies

