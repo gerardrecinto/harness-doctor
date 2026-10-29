@@ -33,7 +33,7 @@ Output (trimmed):
 
 The command exits with code 1 because it found errors. `harness-doctor check examples/good` finds nothing and exits 0. `harness-doctor schema` needs the extra: `pip install 'harness-doctor[schema]'`. To lint your own files, point `check` at a folder such as `.harness` or `.github/workflows`.
 
-There is also a browser demo that runs the same code, with nothing uploaded: https://gerardrecinto.github.io/harness-doctor/
+There is also a browser demo that runs the same code, with nothing uploaded. Its Python runtime loads when you run a sample: https://gerardrecinto.github.io/harness-doctor/
 
 ## What it does and does not do
 
