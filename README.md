@@ -13,7 +13,7 @@ You need Python 3.10 or newer. These commands install from the current `main` br
 
 ```
 git clone https://github.com/gerardrecinto/harness-doctor && cd harness-doctor
-python -m venv .venv && . .venv/bin/activate
+python3 -m venv .venv && . .venv/bin/activate
 pip install .
 harness-doctor check examples/bad/deploy.yaml
 ```
@@ -31,7 +31,7 @@ Output (trimmed):
 2 errors, 5 warnings, 1 info in 1 file
 ```
 
-The command exits with code 1 because it found errors. `harness-doctor check examples/good` finds nothing and exits 0. To lint your own files, point `check` at a folder such as `.harness` or `.github/workflows`.
+The command exits with code 1 because it found errors. `harness-doctor check examples/good` finds nothing and exits 0. `harness-doctor schema` needs the extra: `pip install 'harness-doctor[schema]'`. To lint your own files, point `check` at a folder such as `.harness` or `.github/workflows`.
 
 There is also a browser demo that runs the same code, with nothing uploaded: https://gerardrecinto.github.io/harness-doctor/
 
@@ -216,10 +216,12 @@ To run them in your own account: import the folder with Git Experience, then cre
 <summary>Develop</summary>
 
 ```
-python -m venv .venv && .venv/bin/pip install -e '.[dev]'
+python3 -m venv .venv && .venv/bin/pip install -e '.[dev]'
 .venv/bin/pytest -q
 .venv/bin/ruff check src tests
 ```
+
+Plain `pytest` needs the dev extras (`pip install -e '.[dev]'`) for the coverage plugin.
 
 To add a rule, write a function in `src/harness_doctor/rules.py` decorated with `@rule(...)` that yields `(line, message, hint)`, and add a case to `tests/test_rules.py`.
 

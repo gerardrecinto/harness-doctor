@@ -1,11 +1,14 @@
 # Changelog
 
-## Unreleased
+## Unreleased (planned v0.2.0)
 
 - Rules for GitHub Actions workflows (GA001 to GA009): unpinned third-party actions, a missing or `write-all` token scope, script injection from event data, `pull_request_target` checking out the PR head, secrets written into scripts, self-hosted runners on pull requests, missing job timeouts and `curl | sh`.
 - Rules for Jenkins declarative pipelines (JK001 to JK007): literal credentials, `agent any`, no timeout, Groovy injection in double-quoted `sh` steps, unpinned images, a production deploy with no `input` approval and `curl | sh`.
 - `check` picks the rule set from the file: Harness YAML, an Actions workflow, or a `Jenkinsfile*`. `rules` shows each rule's kind, `schema` skips files that are not Harness YAML, and suppression comments accept `//` as well as `#`.
 - A second pre-commit hook, `harness-doctor-workflows`, for workflows and Jenkinsfiles.
+- This repo's own workflows now pass `harness-doctor check .github/workflows --fail-on warning`: the OPA action is pinned to a commit and the gitleaks download is checksum-verified. CI enforces it.
+- Dependabot auto-merge now covers patch and minor updates only.
+- The browser demo loads Pyodide with a Subresource Integrity hash.
 
 ## v0.1.1
 

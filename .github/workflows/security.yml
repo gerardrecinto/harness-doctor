@@ -24,8 +24,11 @@ jobs:
       # The CLI is free; the gitleaks action needs a license for org repos.
       - name: Run gitleaks
         run: |
-          curl -fsSL https://github.com/gitleaks/gitleaks/releases/download/v8.30.1/gitleaks_8.30.1_linux_x64.tar.gz \
-            | tar -xz -C /usr/local/bin gitleaks
+          v=8.30.1
+          f=gitleaks_${v}_linux_x64.tar.gz
+          curl -fsSLO "https://github.com/gitleaks/gitleaks/releases/download/v${v}/${f}"
+          echo "551f6fc83ea457d62a0d98237cbad105af8d557003051f41f3e7ca7b3f2470eb  ${f}" | sha256sum -c -
+          tar -xzf "${f}" -C /usr/local/bin gitleaks
           gitleaks detect --source . --redact
 
   dependencies:
