@@ -1,0 +1,47 @@
+name: reusable-lint
+
+# Call this workflow from another repo with a job that sets its workflow reference to
+# gerardrecinto/harness-doctor/.github/workflows/reusable-lint.yml at a full commit SHA,
+# and pass the path input (default .github/workflows).
+
+on:
+  workflow_call:
+    inputs:
+      path:
+        description: File or folder to check
+        required: false
+        type: string
+        default: .github/workflows
+      fail-on:
+        description: Lowest severity that fails the job (error, warning, info, never)
+        required: false
+        type: string
+        default: warning
+      harness-doctor-ref:
+        description: Commit of harness-doctor to install (pinned on purpose, bump it when you want new rules)
+        required: false
+        type: string
+        default: 05abc7edb386f24e573fd34b186eee6cab284f74
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Install harness-doctor at the pinned commit
+        env:
+          HD_REF: ${{ inputs.harness-doctor-ref }}
+        run: pip install "git+https://github.com/gerardrecinto/harness-doctor@${HD_REF}"
+      - name: Lint
+        env:
+          TARGET: ${{ inputs.path }}
+          FAIL_ON: ${{ inputs.fail-on }}
+        run: harness-doctor check "$TARGET" --fail-on "$FAIL_ON" --format github
