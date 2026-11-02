@@ -1,11 +1,8 @@
 name: reusable-lint
 
-# Call this from another repo:
-#   jobs:
-#     lint:
-#       uses: gerardrecinto/harness-doctor/.github/workflows/reusable-lint.yml@<commit sha>
-#       with:
-#         path: .github/workflows
+# Call this workflow from another repo with a job that sets its workflow reference to
+# gerardrecinto/harness-doctor/.github/workflows/reusable-lint.yml at a full commit SHA,
+# and pass the path input (default .github/workflows).
 
 on:
   workflow_call:
