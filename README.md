@@ -228,3 +228,5 @@ To add a rule, write a function in `src/harness_doctor/rules.py` decorated with 
 </details>
 
 Changelog: [CHANGELOG.md](CHANGELOG.md). Contributing: [.github/CONTRIBUTING.md](.github/CONTRIBUTING.md). MIT licensed.
+
+Optional paid help: [scoped reviews and setup](SUPPORT.md).
