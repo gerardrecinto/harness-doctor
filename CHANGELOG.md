@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v0.2.0)
 
+- Pin executable CI actions to commit SHAs and test that failed or corrupted gitleaks downloads stop before extraction or execution.
+
 - The README and browser site quick starts use `python3`, clone runnable examples, and explain the deliberate failure. CI verifies the same instructions in a fresh environment on macOS and Linux.
 
 - Rules for GitHub Actions workflows (GA001 to GA009): unpinned third-party actions, a missing or `write-all` token scope, script injection from event data, `pull_request_target` checking out the PR head, secrets written into scripts, self-hosted runners on pull requests, missing job timeouts and `curl | sh`.
