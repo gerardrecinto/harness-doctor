@@ -91,7 +91,9 @@ def as_github(findings: list[Finding], files: int) -> str:
     for f in findings:
         text = f.message + (f". Fix: {f.hint}" if f.hint else "")
         text = text.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
-        lines.append(f"::{level[f.severity]} file={f.file},line={f.line},title={f.rule}::{text}")
+        file = f.file.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        file = file.replace(":", "%3A").replace(",", "%2C")
+        lines.append(f"::{level[f.severity]} file={file},line={f.line},title={f.rule}::{text}")
     return "\n".join(lines)
 
 

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import sys
 import textwrap
+from pathlib import Path
 
 import yaml
 
@@ -49,6 +50,7 @@ def _run(args: argparse.Namespace) -> int:
         print(f"harness-doctor: no such path: {exc}", file=sys.stderr)
         return 2
 
+    explicit = {Path(p) for p in args.paths if Path(p).is_file()}
     findings = []
     for path in files:
         try:
@@ -61,8 +63,11 @@ def _run(args: argparse.Namespace) -> int:
             else:
                 findings += check_file(path, args.select, args.ignore)
         except (OSError, ValueError, yaml.YAMLError) as exc:
-            print(f"harness-doctor: {path}: {exc}", file=sys.stderr)
-            return 2
+            if path in explicit:
+                print(f"harness-doctor: {path}: {exc}", file=sys.stderr)
+                return 2
+            # found by walking a directory: probably not a pipeline, so skip it
+            print(f"harness-doctor: skipped {path}: {exc}", file=sys.stderr)
 
     findings.sort(key=lambda f: (f.file, f.line, f.rule))
     print(FORMATS[args.format](findings, len(files)))

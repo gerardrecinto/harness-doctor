@@ -251,6 +251,25 @@ def test_github_annotations(capsys):
     assert any(line.startswith("::error ") for line in lines)
 
 
+def test_github_annotation_escapes_file_property(tmp_path, capsys):
+    odd = tmp_path / "a,b:c.yaml"
+    odd.write_text((ROOT / "examples/bad/deploy.yaml").read_text())
+    main(["check", str(odd), "--format", "github", "--fail-on", "never"])
+    first = capsys.readouterr().out.splitlines()[0]
+    assert "a%2Cb%3Ac.yaml,line=" in first
+    assert first.count(",line=") == 1
+
+
+def test_directory_scan_skips_non_pipeline_yaml(tmp_path, capsys):
+    (tmp_path / "empty.yaml").write_text("")
+    (tmp_path / "list.yaml").write_text("- a\n- b\n")
+    (tmp_path / "deploy.yaml").write_text((ROOT / "examples/bad/deploy.yaml").read_text())
+    assert main([str(tmp_path)]) == 1
+    out, err = capsys.readouterr()
+    assert "HD005" in out
+    assert "skipped" in err and "empty.yaml" in err
+
+
 def test_malformed_yaml_exits_2(tmp_path, capsys):
     bad = tmp_path / "bad.yaml"
     bad.write_text("pipeline: [unclosed")
