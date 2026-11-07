@@ -24,6 +24,17 @@ def test_executable_actions_are_pinned():
     assert refs, "no executable action references checked"
 
 
+def test_codeql_action_steps_share_one_version():
+    # CodeQL fails at runtime when init and analyze come from different releases
+    pins = {}
+    pattern = r"\buses:\s*github/codeql-action/([\w-]+)@([0-9a-f]{40})"
+    for path in [*ROOT.glob(".github/workflows/*.yml"), ROOT / "action.yml"]:
+        for name, sha in re.findall(pattern, path.read_text()):
+            pins[(path.name, name)] = sha
+    assert {"init", "analyze", "upload-sarif"} <= {name for _, name in pins}
+    assert len(set(pins.values())) == 1, pins
+
+
 @pytest.mark.parametrize("download", ["valid", "tampered", "missing", "error"])
 def test_gitleaks_download_is_verified_before_execution(tmp_path, download):
     workflow = yaml.safe_load((ROOT / ".github/workflows/security.yml").read_text())
