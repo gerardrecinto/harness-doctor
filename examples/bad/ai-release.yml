@@ -1,0 +1,21 @@
+name: serve-model
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch weights
+        run: huggingface-cli download meta-llama/Llama-3.1-8B-Instruct --local-dir ./model
+      - name: Build and push the vLLM image
+        run: |
+          docker build -t registry.example.com/llm/serve:${{ github.sha }} .
+          docker push registry.example.com/llm/serve:${{ github.sha }}
+      - name: Deploy
+        run: helm upgrade llm-serve ./chart --set image.tag=${{ github.sha }}

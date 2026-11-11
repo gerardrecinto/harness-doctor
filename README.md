@@ -37,12 +37,14 @@ There is also a browser demo that runs the same code, with nothing uploaded. Its
 
 ## What it does and does not do
 
-- It checks 25 rules: 9 for Harness pipelines, 9 for GitHub Actions workflows and 7 for Jenkinsfiles. Examples are a literal token, an image tagged `latest`, a production deploy with no approval, and untrusted text pasted into a script.
+- It checks 29 rules: 9 for Harness pipelines, 13 for GitHub Actions workflows (9 general, 4 for AI model delivery) and 7 for Jenkinsfiles. Examples are a literal token, an image tagged `latest`, a production deploy with no approval, and untrusted text pasted into a script.
 - It reads one file at a time. It does not call Harness, resolve templates or runtime inputs, or know which secrets exist in your account.
 - A secret that does not look like a secret by name or format is not flagged.
 - It is a linter, not proof that a pipeline is safe.
 - The GitHub Actions and Jenkins rules are on `main` but not in the v0.1.1 release. Installing from `main`, as above, includes them. The v0.1.1 release and the GitHub Action pinned to it check Harness files only.
-- Jenkins checks read the Groovy text, so a pipeline that builds its stages dynamically can hide a finding.
+- The AI rules read one job at a time: a scan or SBOM in a different job, or a verify step in a separate workflow, is not seen, so suppress with `# harness-doctor: ignore AI002` on the line above the job name when that is your design. Try them with `harness-doctor check examples/bad/ai-release.yml`.
+
+Jenkins checks read the Groovy text, so a pipeline that builds its stages dynamically can hide a finding.
 
 ## More
 
@@ -90,7 +92,7 @@ examples/bad/deploy.yaml
 </details>
 
 <details>
-<summary>GitHub Actions and Jenkins rules (GA001 to GA009, JK001 to JK007)</summary>
+<summary>GitHub Actions and Jenkins rules (GA001 to GA009, AI001 to AI004, JK001 to JK007)</summary>
 
 The same command checks `.github/workflows/*.yml` and any file named `Jenkinsfile*`, picking the rule set from the file itself. `harness-doctor check .github/workflows Jenkinsfile` runs both.
 
@@ -105,6 +107,10 @@ The same command checks `.github/workflows/*.yml` and any file named `Jenkinsfil
 | GA007 | warning | A self-hosted runner on a pull request trigger |
 | GA008 | info | A job with no `timeout-minutes` |
 | GA009 | warning | `curl ... \| sh` in a step |
+| AI001 | warning | A Hugging Face or NGC model pulled (`huggingface-cli download`, `snapshot_download`, `from_pretrained`, `git clone` of a hub repo) with no 40-character revision |
+| AI002 | warning | A job that pushes an image and runs no Trivy, Grype or Snyk scan |
+| AI003 | info | A job that pushes an image and produces no SBOM (syft, Trivy CycloneDX or SPDX, `sbom: true`) |
+| AI004 | warning | `helm upgrade`, `kubectl apply` or `argocd app sync` with no rollout wait, `--atomic`, smoke check or rollback in the same job |
 | JK001 | error | A password, token or key literal in the Jenkinsfile |
 | JK002 | warning | `agent any` |
 | JK003 | warning | A declarative pipeline with no `timeout` |

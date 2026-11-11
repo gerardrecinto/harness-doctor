@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v0.2.0)
 
+- Rules for AI model delivery in GitHub Actions (AI001 to AI004): model weights pulled without a pinned revision, an image pushed with no vulnerability scan or SBOM, and a deploy with no rollout wait or rollback. New `examples/bad/ai-release.yml` and a matching clean file, and an AI sample in the browser demo.
+
 - Pin executable CI actions to commit SHAs and test that failed or corrupted gitleaks downloads stop before extraction or execution.
 
 - The README and browser site quick starts use `python3`, clone runnable examples, and explain the deliberate failure. CI verifies the same instructions in a fresh environment on macOS and Linux.

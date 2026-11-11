@@ -158,6 +158,7 @@ footer .wrap{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
           <button class="chip" data-ex="good" aria-pressed="false">Harness, clean</button>
           <button class="chip" data-ex="workflow" aria-pressed="false">Actions, risky</button>
           <button class="chip" data-ex="jenkins" aria-pressed="false">Jenkins, risky</button>
+          <button class="chip" data-ex="ai" aria-pressed="false">AI model release, risky</button>
         </span>
       </h3>
       <div class="editor">
@@ -244,7 +245,7 @@ harness-doctor explain HD007</code></pre></div>
   const src = $("src"), gutter = $("gutter"), out = $("out"), summary = $("summary");
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const examples = {};
-  const FILES = { bad: "pipeline.yaml", good: "pipeline.yaml", workflow: "ci.yml", jenkins: "Jenkinsfile" };
+  const FILES = { bad: "pipeline.yaml", good: "pipeline.yaml", workflow: "ci.yml", jenkins: "Jenkinsfile", ai: "release.yml" };
   const KINDS = { harness: "Harness", github: "Actions", jenkins: "Jenkins" };
   let cur = "bad";
   let py = null, fmt = "list", timer = null, last = null, loading = null;
@@ -406,7 +407,7 @@ def rules():
   }
   document.querySelectorAll("[data-ex]").forEach((b) => b.addEventListener("click", () => setExample(b.dataset.ex)));
 
-  const EXFILES = { bad: "bad.yaml", good: "good.yaml", workflow: "workflow.yml", jenkins: "Jenkinsfile" };
+  const EXFILES = { bad: "bad.yaml", good: "good.yaml", workflow: "workflow.yml", jenkins: "Jenkinsfile", ai: "ai-release.yml" };
   const examplesReady = Promise.all(Object.keys(EXFILES).map((n) => fetch(`examples/${EXFILES[n]}`).then((r) => { if (!r.ok) throw 0; return r.text(); }).then((t) => { examples[n] = t; }))).then(() => {
     src.value = examples.bad; drawGutter(null); if (py) lint();
   }).catch(() => { src.value = "# could not load the example\n"; });

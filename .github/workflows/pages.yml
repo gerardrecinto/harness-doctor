@@ -31,7 +31,7 @@ jobs:
           for f in __init__ model rules ci engine report; do cp src/harness_doctor/$f.py _site/py/; done
           cp examples/bad/deploy.yaml _site/examples/bad.yaml
           cp examples/good/deploy.yaml _site/examples/good.yaml
-          cp examples/bad/workflow.yml examples/bad/Jenkinsfile _site/examples/
+          cp examples/bad/workflow.yml examples/bad/Jenkinsfile examples/bad/ai-release.yml _site/examples/
           touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:

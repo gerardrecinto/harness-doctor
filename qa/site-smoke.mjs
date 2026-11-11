@@ -13,7 +13,7 @@ await copyFile(join(root, 'site/index.html'), join(site, 'index.html'));
 for (const name of ['__init__', 'model', 'rules', 'ci', 'engine', 'report']) {
   await copyFile(join(root, `src/harness_doctor/${name}.py`), join(site, `py/${name}.py`));
 }
-for (const [from, to] of [['bad/deploy.yaml', 'bad.yaml'], ['good/deploy.yaml', 'good.yaml'], ['bad/workflow.yml', 'workflow.yml'], ['bad/Jenkinsfile', 'Jenkinsfile']]) {
+for (const [from, to] of [['bad/deploy.yaml', 'bad.yaml'], ['good/deploy.yaml', 'good.yaml'], ['bad/workflow.yml', 'workflow.yml'], ['bad/Jenkinsfile', 'Jenkinsfile'], ['bad/ai-release.yml', 'ai-release.yml']]) {
   await copyFile(join(root, `examples/${from}`), join(site, `examples/${to}`));
 }
 const server = createServer(async (req, res) => {
@@ -55,7 +55,9 @@ try {
         await page.waitForFunction(() => document.querySelector('#out').textContent.includes('GA003'));
         await page.locator('[data-ex="jenkins"]').click();
         await page.waitForFunction(() => document.querySelector('#out').textContent.includes('JK001'));
-        assert.equal(await page.locator('#rules-body tr').count(), 25);
+        await page.locator('[data-ex="ai"]').click();
+        await page.waitForFunction(() => ['AI001', 'AI002', 'AI004'].every(id => document.querySelector('#out').textContent.includes(id)));
+        assert.equal(await page.locator('#rules-body tr').count(), 29);
         assert.deepEqual(errors, []);
         const totalBytes = (await Promise.all(sizes)).reduce((a, b) => a + b, 0);
         console.log(JSON.stringify({ browser: name, width, initialResponseBodyBytes: initialBytes, activatedResponseBodyBytes: totalBytes, checks: 'bad/clean/Actions/Jenkins actual Python engine passed' }));

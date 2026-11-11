@@ -444,3 +444,112 @@ def jenkins_pipe_to_shell(doc: Doc):
     for n, text in _code(doc):
         if PIPE_TO_SHELL.search(text):
             yield n, "a step pipes a download into a shell", "download to a file, check its sha256, then execute"
+
+
+# --- AI workload delivery (AI001 to AI004) ---------------------------------
+# These read GitHub Actions workflows that ship models and model-serving images.
+
+MODEL_PULL = re.compile(
+    r"(huggingface-cli\s+download|hf\s+download|snapshot_download\(|hf_hub_download\(|from_pretrained\(|"
+    r"git\s+clone\s+\S*huggingface\.co|ngc\s+registry\s+model\s+download)"
+)
+REVISION_SHA = re.compile(r"(--revision[ =]|revision\s*=\s*)[\"']?[0-9a-f]{40}\b")
+IMAGE_PUSH = re.compile(r"\bdocker\s+push\b|\bbuildx?\s+.*--push\b|\bcrane\s+push\b")
+IMAGE_SCAN = re.compile(r"\b(trivy|grype|snyk|clair-scanner)\b|aquasecurity/trivy-action|anchore/scan-action|snyk/actions")
+SBOM_STEP = re.compile(r"\bsyft\b|\btrivy\s+.*(sbom|--format\s+(cyclonedx|spdx))|anchore/sbom-action|cyclonedx|\bcosign\s+attest\b")
+DEPLOY_CMD = re.compile(r"\bhelm\s+(upgrade|install)\b|\bkubectl\s+(apply|set\s+image)\b|\bargocd\s+app\s+sync\b|\bkustomize\s+.*\|\s*kubectl\b")
+VERIFY_CMD = re.compile(r"rollout\s+status|rollout\s+undo|--atomic|--wait\b|argocd\s+app\s+wait|helm\s+rollback|smoke|verify|canary|analysis")
+
+
+def _job_text(job: Node) -> str:
+    parts = []
+    for step in _steps(job):
+        for key in ("uses", "run", "name"):
+            if isinstance(step.get(key), str):
+                parts.append(step[key])
+        with_ = step.get("with")
+        if isinstance(with_, dict):
+            parts.extend(f"{k}: {v}" for k, v in with_.items())
+    return "\n".join(parts)
+
+
+def _pushes_image(job: Node) -> bool:
+    for step in _steps(job):
+        run = step.get("run")
+        if isinstance(run, str) and IMAGE_PUSH.search(run):
+            return True
+        if isinstance(step.get("uses"), str) and step["uses"].startswith("docker/build-push-action"):
+            with_ = step.get("with")
+            if isinstance(with_, dict) and str(with_.get("push", "")).lower() == "true":
+                return True
+    return False
+
+
+@rule(
+    "AI001",
+    WARNING,
+    "Model downloaded without a pinned revision",
+    "A Hugging Face or NGC model referenced by name or branch changes when its owner pushes. The "
+    "weights your tests passed on are not the weights that reach production. Pin the full commit "
+    "SHA so a release is repeatable and an incident can name the exact artifact.",
+    kind=GITHUB,
+)
+def unpinned_model(doc: Doc):
+    for _, job in _jobs(doc):
+        for step, script in _scripts(job):
+            for match in MODEL_PULL.finditer(script):
+                line_end = script.find("\n", match.end())
+                statement = script[match.start() : line_end if line_end != -1 else len(script)]
+                if not REVISION_SHA.search(statement):
+                    yield (
+                        _find_line(doc, step.line, r"\brun:"),
+                        f"'{match.group(1).strip()}' has no 40-character --revision",
+                        "pass --revision <commit sha>, or revision=\"<commit sha>\" in code",
+                    )
+                    break
+
+
+@rule(
+    "AI002",
+    WARNING,
+    "Image pushed without a vulnerability scan in the same job",
+    "Model-serving images carry CUDA, Python and system packages with a steady stream of CVEs. A "
+    "job that pushes an image and never scans it ships whatever is in the base layer today.",
+    kind=GITHUB,
+)
+def push_without_scan(doc: Doc):
+    for job_id, job in _jobs(doc):
+        if _pushes_image(job) and not IMAGE_SCAN.search(_job_text(job)):
+            yield job.line, f"job '{job_id}' pushes an image and runs no Trivy, Grype or Snyk scan", "scan before the push and fail the job on HIGH and CRITICAL"
+
+
+@rule(
+    "AI003",
+    INFO,
+    "Image pushed without an SBOM",
+    "Without a software bill of materials you cannot answer which releases contain a newly "
+    "disclosed vulnerable package. In regulated delivery that question arrives with a deadline.",
+    kind=GITHUB,
+)
+def push_without_sbom(doc: Doc):
+    for job_id, job in _jobs(doc):
+        text = _job_text(job)
+        if _pushes_image(job) and not SBOM_STEP.search(text) and not re.search(r"\bsbom:\s*true", text, re.I):
+            yield job.line, f"job '{job_id}' pushes an image and produces no SBOM", "generate one with syft or trivy (CycloneDX or SPDX) and attach it to the image"
+
+
+@rule(
+    "AI004",
+    WARNING,
+    "Deploy with no verification or rollback step",
+    "A deploy step that returns as soon as the manifest is applied reports success before the new "
+    "model server has loaded weights or passed a health check. Wait for rollout, verify, and roll "
+    "back on failure so a bad release does not stay up.",
+    kind=GITHUB,
+)
+def deploy_without_verification(doc: Doc):
+    for job_id, job in _jobs(doc):
+        text = _job_text(job)
+        deploy = next((m for _, script in _scripts(job) if (m := DEPLOY_CMD.search(script))), None)
+        if deploy and not VERIFY_CMD.search(text):
+            yield job.line, f"job '{job_id}' runs '{deploy.group(0)}' with no rollout wait, smoke check or rollback", "add `kubectl rollout status`, `helm upgrade --atomic --wait`, or an `argocd app wait` plus a smoke test"
