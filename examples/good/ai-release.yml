@@ -1,0 +1,25 @@
+name: serve-model
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  packages: write
+jobs:
+  ship:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch weights at a pinned revision
+        run: huggingface-cli download meta-llama/Llama-3.1-8B-Instruct --revision 0e9e39f249a16976918f6564b8830bc894c89659 --local-dir ./model
+      - name: Build the vLLM image
+        run: docker build -t registry.example.com/llm/serve:${{ github.sha }} .
+      - name: Scan, fail on HIGH and CRITICAL
+        run: trivy image --exit-code 1 --severity HIGH,CRITICAL registry.example.com/llm/serve:${{ github.sha }}
+      - name: SBOM
+        run: syft registry.example.com/llm/serve:${{ github.sha }} -o cyclonedx-json > sbom.json
+      - name: Push
+        run: docker push registry.example.com/llm/serve:${{ github.sha }}
+      - name: Deploy, wait, roll back on failure
+        run: helm upgrade llm-serve ./chart --atomic --wait --timeout 15m --set image.tag=${{ github.sha }}
