@@ -153,7 +153,7 @@ harness-doctor check .harness --write-baseline .harness-doctor-baseline.json   #
 harness-doctor check .harness --baseline .harness-doctor-baseline.json         # CI: exit 1 only for new findings
 ```
 
-A baseline entry is the rule, file and message, not the line number, so editing above a finding does not bring it back. Run it from the same directory each time, because the file path is part of the entry. Rolling back is deleting the flag. When old findings get fixed, the run says how many baseline entries no longer occur; rerun `--write-baseline` to shrink the file.
+A baseline entry is the rule, file and message, not the line number, so editing above a finding does not bring it back. Paths are stored relative to the directory you run from, so `.harness`, `./.harness` and an absolute path to it all match; run it from the repository root each time. Rolling back is deleting the flag. When old findings get fixed, the run says how many baseline entries no longer occur; rerun `--write-baseline` to shrink the file.
 
 Silence one finding with a comment on the line, or either of the two lines above it:
 
@@ -186,6 +186,8 @@ steps:
 ```
 
 Findings show up as annotations on the pull request and, through SARIF, in the Security tab. The SARIF upload needs `security-events: write` and code scanning on the repo. On fork pull requests and private repos without it, the upload is skipped with a warning and the lint result still decides the job. Set `sarif: "false"` to turn it off.
+
+To adopt it on a repo that already has findings, commit a baseline (`harness-doctor check .harness --write-baseline .harness-doctor-baseline.json`) and add `baseline: .harness-doctor-baseline.json` to the step. Only findings not in the file fail the job, and they are the only ones in the annotations and the SARIF report. This input is on `main` and not in v0.1.1, so pin the action to a commit that has it.
 
 ### pre-commit
 

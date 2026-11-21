@@ -9,9 +9,19 @@ from pathlib import Path
 from .rules import Finding
 
 
+def _path(file: str) -> str:
+    """Spell a path relative to the current directory when it is inside it, so
+    `.harness`, `./.harness` and an absolute path to the same file all match."""
+    p = Path(file)
+    try:
+        return p.resolve().relative_to(Path.cwd().resolve()).as_posix()
+    except ValueError:
+        return p.as_posix()
+
+
 def _key(f: Finding) -> tuple[str, str, str]:
     # The line is left out on purpose: it moves whenever someone edits above it.
-    return (f.rule, Path(f.file).as_posix(), f.message)
+    return (f.rule, _path(f.file), f.message)
 
 
 def write(path: str, findings: list[Finding]) -> None:

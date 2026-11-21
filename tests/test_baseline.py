@@ -44,3 +44,14 @@ def test_baseline_reports_fixed_entries_and_bad_files(tmp_path, capsys):
     (tmp_path / "junk.json").write_text("nope")
     code, _, err = run(capsys, "check", str(BAD), "--baseline", str(tmp_path / "junk.json"))
     assert code == 2 and "not a harness-doctor baseline" in err
+
+
+def test_baseline_matches_however_the_path_is_spelled(tmp_path, monkeypatch, capsys):
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "pipes").mkdir()
+    shutil.copy(BAD, tmp_path / "pipes" / "deploy.yaml")
+    code, _, _ = run(capsys, "check", "pipes", "--write-baseline", "base.json")
+    assert code == 0
+    for spelling in ("pipes", "./pipes", str(tmp_path / "pipes")):
+        code, out, _ = run(capsys, "check", spelling, "--baseline", "base.json")
+        assert code == 0 and "no findings" in out, spelling
