@@ -146,6 +146,15 @@ harness-doctor check .harness --format github       # inline annotations on the 
 harness-doctor schema .harness                      # validate against Harness's published JSON schema
 ```
 
+Adopting it on pipelines that already have findings: save them once, then fail only on new ones.
+
+```
+harness-doctor check .harness --write-baseline .harness-doctor-baseline.json   # commit this file
+harness-doctor check .harness --baseline .harness-doctor-baseline.json         # CI: exit 1 only for new findings
+```
+
+A baseline entry is the rule, file and message, not the line number, so editing above a finding does not bring it back. Run it from the same directory each time, because the file path is part of the entry. Rolling back is deleting the flag. When old findings get fixed, the run says how many baseline entries no longer occur; rerun `--write-baseline` to shrink the file.
+
 Silence one finding with a comment on the line, or either of the two lines above it:
 
 ```yaml
