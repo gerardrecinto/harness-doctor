@@ -2,6 +2,8 @@
 
 ## Unreleased (planned v0.2.0)
 
+- `--write-baseline FILE` and `--baseline FILE` for `check`: save the findings a repo has today and fail only on new ones, so a team can turn the linter on in CI without fixing every old pipeline first. Entries match on rule, file and message, so line shifts do not matter, and paths are compared relative to the working directory, so `.harness`, `./.harness` and an absolute path agree. The GitHub Action takes the same thing as a `baseline` input.
+
 - Rules for AI model delivery in GitHub Actions (AI001 to AI004): model weights pulled without a pinned revision, an image pushed with no vulnerability scan or SBOM, and a deploy with no rollout wait or rollback. New `examples/bad/ai-release.yml` and a matching clean file, and an AI sample in the browser demo.
 
 - Pin executable CI actions to commit SHAs and test that failed or corrupted gitleaks downloads stop before extraction or execution.

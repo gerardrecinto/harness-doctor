@@ -61,6 +61,17 @@ jobs:
           fail-on: warning
           schema: "true"
           sarif: "false"
+      - name: Make a baseline from the known-bad examples
+        run: |
+          python3 -m venv /tmp/hd && /tmp/hd/bin/pip install -q .
+          /tmp/hd/bin/harness-doctor check examples/bad --write-baseline /tmp/baseline.json
+      - name: Run the Action with the baseline, only new findings may fail it
+        uses: ./
+        with:
+          path: examples/bad
+          fail-on: info
+          baseline: /tmp/baseline.json
+          sarif: "false"
 
   policy:
     runs-on: ubuntu-latest

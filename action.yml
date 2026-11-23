@@ -13,6 +13,9 @@ inputs:
   schema:
     description: Also validate against Harness's published JSON schema
     default: "false"
+  baseline:
+    description: Baseline file made with `harness-doctor check --write-baseline`. Findings already in it are ignored, so only new ones fail the job
+    default: ""
   sarif:
     description: Upload findings to GitHub code scanning
     default: "true"
@@ -28,9 +31,12 @@ runs:
       env:
         TARGET: ${{ inputs.path }}
         FAIL_ON: ${{ inputs.fail-on }}
+        BASELINE: ${{ inputs.baseline }}
       run: |
-        harness-doctor check "$TARGET" --format sarif --fail-on never > harness-doctor.sarif || rm -f harness-doctor.sarif
-        harness-doctor check "$TARGET" --format github --fail-on "$FAIL_ON"
+        args=()
+        if [ -n "$BASELINE" ]; then args+=(--baseline "$BASELINE"); fi
+        harness-doctor check "$TARGET" --format sarif --fail-on never "${args[@]}" > harness-doctor.sarif || rm -f harness-doctor.sarif
+        harness-doctor check "$TARGET" --format github --fail-on "$FAIL_ON" "${args[@]}"
     - if: ${{ !cancelled() && inputs.schema == 'true' }}
       shell: bash
       env:

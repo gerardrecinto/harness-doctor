@@ -7,7 +7,7 @@ from pathlib import Path
 
 import yaml
 
-from . import __version__
+from . import __version__, baseline
 from .engine import check_file
 from .model import discover, parse
 from .report import FORMATS
@@ -36,6 +36,8 @@ def _parser() -> argparse.ArgumentParser:
         if name == "check":
             s.add_argument("--select", type=_csv, help="only these rule ids, comma separated")
             s.add_argument("--ignore", type=_csv, help="skip these rule ids, comma separated")
+            s.add_argument("--write-baseline", metavar="FILE", help="save today's findings to FILE and exit 0")
+            s.add_argument("--baseline", metavar="FILE", help="ignore findings already in FILE, report only new ones")
 
     sub.add_parser("rules", help="list every rule")
     e = sub.add_parser("explain", help="say why a rule exists")
@@ -74,6 +76,21 @@ def _run(args: argparse.Namespace) -> int:
             print(f"harness-doctor: skipped {path}: {exc}", file=sys.stderr)
 
     findings.sort(key=lambda f: (f.file, f.line, f.rule))
+    if args.cmd == "check" and args.write_baseline:
+        baseline.write(args.write_baseline, findings)
+        print(f"harness-doctor: saved {len(findings)} findings to {args.write_baseline}. Commit it, then run with --baseline {args.write_baseline}.")
+        return 0
+    if args.cmd == "check" and args.baseline:
+        try:
+            known = baseline.load(args.baseline)
+        except ValueError as exc:
+            print(f"harness-doctor: {exc}", file=sys.stderr)
+            return 2
+        findings, covered, gone = baseline.apply(findings, known)
+        note = f"harness-doctor: baseline covered {covered} existing findings."
+        if gone:
+            note += f" {gone} baseline entries no longer occur; rerun --write-baseline to shrink it."
+        print(note, file=sys.stderr)
     print(FORMATS[args.format](findings, len(files)))
     if args.fail_on == "never":
         return 0
