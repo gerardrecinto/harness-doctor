@@ -281,3 +281,10 @@ def test_non_mapping_yaml_exits_2(tmp_path):
     bad = tmp_path / "list.yaml"
     bad.write_text("- a\n- b\n")
     assert main([str(bad)]) == 2
+
+
+def test_unknown_rule_id_in_select_or_ignore_is_an_error(capsys):
+    bad = str(ROOT / "examples/bad")
+    assert main([bad, "--select", "HD999"]) == 2
+    assert main([bad, "--ignore", "HD001,HD0O9"]) == 2
+    assert "HD0O9" in capsys.readouterr().err

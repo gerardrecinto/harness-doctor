@@ -44,6 +44,10 @@ def _parser() -> argparse.ArgumentParser:
 
 
 def _run(args: argparse.Namespace) -> int:
+    unknown = sorted(((getattr(args, "select", None) or set()) | (getattr(args, "ignore", None) or set())) - RULES.keys())
+    if unknown:
+        print(f"harness-doctor: unknown rule id: {', '.join(unknown)} (see 'harness-doctor rules')", file=sys.stderr)
+        return 2
     try:
         files = discover(args.paths)
     except FileNotFoundError as exc:
