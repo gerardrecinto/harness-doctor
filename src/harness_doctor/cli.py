@@ -66,7 +66,10 @@ def _run(args: argparse.Namespace) -> int:
                     findings += validate_file(path)
             else:
                 findings += check_file(path, args.select, args.ignore)
-        except (OSError, ValueError, yaml.YAMLError) as exc:
+        except yaml.YAMLError as exc:
+            print(f"harness-doctor: {path}: {exc}", file=sys.stderr)
+            return 2
+        except (OSError, ValueError) as exc:
             if path in explicit:
                 print(f"harness-doctor: {path}: {exc}", file=sys.stderr)
                 return 2

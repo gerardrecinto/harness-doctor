@@ -44,6 +44,8 @@ There is also a browser demo that runs the same code, with nothing uploaded. Its
 - The GitHub Actions and Jenkins rules are on `main` but not in the v0.1.1 release. Installing from `main`, as above, includes them. The v0.1.1 release and the GitHub Action pinned to it check Harness files only.
 - The AI rules read one job at a time: a scan or SBOM in a different job, or a verify step in a separate workflow, is not seen, so suppress with `# harness-doctor: ignore AI002` on the line above the job name when that is your design. Try them with `harness-doctor check examples/bad/ai-release.yml`.
 
+Malformed YAML exits 2 even during a directory scan or with `--fail-on never`, so a broken pipeline cannot produce a passing lint gate. Empty YAML and non-mapping YAML found in a directory are still skipped.
+
 Jenkins checks read the Groovy text, so a pipeline that builds its stages dynamically can hide a finding.
 
 ## More

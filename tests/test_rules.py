@@ -288,3 +288,15 @@ def test_unknown_rule_id_in_select_or_ignore_is_an_error(capsys):
     assert main([bad, "--select", "HD999"]) == 2
     assert main([bad, "--ignore", "HD001,HD0O9"]) == 2
     assert "HD0O9" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("command", ["check", "schema"])
+@pytest.mark.parametrize("fail_on", ["error", "never"])
+def test_directory_scan_rejects_malformed_yaml(tmp_path, capsys, command, fail_on):
+    bad = tmp_path / "deploy.yaml"
+    bad.write_text("pipeline: [unclosed")
+    assert main([command, str(tmp_path), "--fail-on", fail_on]) == 2
+    out, err = capsys.readouterr()
+    assert "deploy.yaml" in err
+    assert "no findings" not in out
+    assert "skipped" not in err
