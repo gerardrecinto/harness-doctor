@@ -222,15 +222,7 @@ harness-doctor explain HD007</code></pre></div>
       <p class="note">The Action puts findings on the pull request. The Actions and Jenkins rules are on <code>main</code> but not in v0.1.1, so v0.1.1 checks Harness files only. A pre-commit hook is in the <a href="https://github.com/gerardrecinto/harness-doctor#readme">README</a>.</p>
     </div>
   </div>
-  <div class="limits">
-    <strong>What this does not do</strong>
-    <ul>
-      <li>It is a linter. It shows these patterns are absent, not that a pipeline is safe.</li>
-      <li>It reads one file at a time. It does not resolve templates, runtime inputs or account policy, and does not know which secrets exist.</li>
-      <li>Jenkins checks read the Groovy text, so a dynamically built pipeline can hide a finding.</li>
-      <li>A secret that does not look like one by name or format is not flagged.</li>
-    </ul>
-  </div>
+  <p class="note">A clean result means these patterns are absent, not that a pipeline is safe.</p>
 </div></section>
 
 <footer><div class="wrap">
